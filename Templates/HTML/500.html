@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error • Focus Flow{% endblock %}
+
+{% block nav_links %}
+    <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+    <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+    <a class="nav-link" href="{{ url_for('signup') }}">Sign Up</a>
+{% endblock %}
+
+{% block content %}
+<div class="py-5 text-center">
+    <div class="mb-4">
+        <h1 class="display-1 fw-bold">500</h1>
+        <h2 class="h3 mb-2">Internal Server Error</h2>
+        <p class="text-secondary mb-4">Something went wrong on our end. Please try again later.</p>
+    </div>
+    <a href="{{ url_for('index') }}" class="btn btn-dark">Go Back Home</a>
+</div>
+{% endblock %}
