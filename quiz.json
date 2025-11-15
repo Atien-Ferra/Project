@@ -1,0 +1,34 @@
+{
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Which HTTP method is generally used to create a new resource?",
+      "options": ["GET", "POST", "PUT", "DELETE"],
+      "correct_index": 1
+    },
+    {
+      "id": "q2",
+      "question": "In CSS, which property controls the space outside an element’s border?",
+      "options": ["Padding", "Margin", "Border", "Gap"],
+      "correct_index": 1
+    },
+    {
+      "id": "q3",
+      "question": "What does SQL stand for?",
+      "options": ["Structured Query Language", "Stylish Question Language", "System Query Logic", "Server Query Language"],
+      "correct_index": 0
+    },
+    {
+      "id": "q4",
+      "question": "Which tag makes the largest default heading in HTML?",
+      "options": ["<h1>", "<h6>", "<header>", "<title>"],
+      "correct_index": 0
+    },
+    {
+      "id": "q5",
+      "question": "Which is a NoSQL database?",
+      "options": ["PostgreSQL", "MySQL", "MongoDB", "SQLite"],
+      "correct_index": 2
+    }
+  ]
+}
