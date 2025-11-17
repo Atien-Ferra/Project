@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
+from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 import os
 from werkzeug.utils import secure_filename
 
@@ -11,6 +12,23 @@ app = Flask(__name__,
 app.secret_key = 'your-secret-key-here-change-in-production'
 app.config['UPLOAD_FOLDER'] = os.path.join(basedir, 'Static', 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+# User class (example)
+class User(UserMixin):
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
+
+# User loader
+@login_manager.user_loader
+def load_user(user_id):
+    # Replace with your user loading logic
+    return User(user_id, "Example User")
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
@@ -63,8 +81,8 @@ def login():
         
         # Mock authentication (replace with real authentication)
         if email in users and users[email]['password'] == password:
-            session['user'] = email
-            session['user_name'] = users[email]['name']
+            user = User(id=email, name=users[email]['name'])
+            login_user(user, remember=remember)
             flash('Login successful!', 'success')
             return redirect(url_for('dashboard'))
         else:
@@ -107,20 +125,17 @@ def signup():
             'tasks_done': 0
         }
         
-        session['user'] = email
-        session['user_name'] = name
+        user = User(id=email, name=name)
+        login_user(user)
         flash('Account created successfully!', 'success')
         return redirect(url_for('dashboard'))
     
     return render_template('signup.html')
 
 @app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
 def dashboard():
-    if 'user' not in session:
-        flash('Please log in first', 'error')
-        return redirect(url_for('login'))
-    
-    user_email = session['user']
+    user_email = current_user.id
     user_data = users.get(user_email, {})
     
     if request.method == 'POST':
@@ -137,17 +152,14 @@ def dashboard():
                 flash('Invalid file type. Please upload PDF, DOCX, or TXT files.', 'error')
     
     return render_template('dashboard.html', 
-                         user_name=session.get('user_name', 'User'),
+                         user_name=current_user.name,
                          streak=user_data.get('streak', 0),
                          quizzes_taken=user_data.get('quizzes_taken', 0),
                          tasks_done=user_data.get('tasks_done', 0))
 
 @app.route('/quiz', methods=['GET', 'POST'])
+@login_required
 def quiz():
-    if 'user' not in session:
-        flash('Please log in first', 'error')
-        return redirect(url_for('login'))
-    
     if request.method == 'POST':
         # Process quiz answers
         answers = {
@@ -163,7 +175,7 @@ def quiz():
         score = sum(1 for q, a in answers.items() if a == correct_answers.get(q))
         
         # Update user stats
-        user_email = session['user']
+        user_email = current_user.id
         if user_email in users:
             users[user_email]['quizzes_taken'] = users[user_email].get('quizzes_taken', 0) + 1
         
@@ -188,33 +200,27 @@ def forgotpassword():
     return render_template('forgotpassword.html')
 
 @app.route('/profile')
+@login_required
 def profile():
-    if 'user' not in session:
-        flash('Please log in first', 'error')
-        return redirect(url_for('login'))
-    
-    user_email = session['user']
+    user_email = current_user.id
     user_data = users.get(user_email, {})
     
     return render_template('profile.html', 
-                         user_name=session.get('user_name', 'User'),
+                         user_name=current_user.name,
                          user_email=user_email,
                          streak=user_data.get('streak', 0),
                          quizzes_taken=user_data.get('quizzes_taken', 0),
                          tasks_done=user_data.get('tasks_done', 0))
 
 @app.route('/updatepassword', methods=['GET', 'POST'])
+@login_required
 def updatepassword():
-    if 'user' not in session:
-        flash('Please log in first', 'error')
-        return redirect(url_for('login'))
-    
     if request.method == 'POST':
         current_password = request.form.get('current_password')
         new_password = request.form.get('new_password')
         confirm_password = request.form.get('confirm_password')
         
-        user_email = session['user']
+        user_email = current_user.id
         user_data = users.get(user_email)
         
         if user_data and user_data['password'] == current_password:
@@ -230,8 +236,9 @@ def updatepassword():
     return render_template('updatepassword.html')
 
 @app.route('/logout')
+@login_required
 def logout():
-    session.clear()
+    logout_user()
     flash('You have been logged out', 'info')
     return redirect(url_for('index'))
 
