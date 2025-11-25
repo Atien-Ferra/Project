@@ -4,3 +4,4 @@
 mongo-test.py
 __pycache__/
 *.pyc
+/static/uploads/*
