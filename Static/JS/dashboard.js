@@ -2,26 +2,20 @@ $(document).ready(function() {
     // Initialize progress
     updateProgress();
 
-    // File upload handling
+    // File upload handling - submit form on file selection
     $('#fileUpload').on('change', function() {
         const file = this.files[0];
         if (file) {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            $.ajax({
-                url: '/dashboard',
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    window.location.href = '/quiz';
-                },
-                error: function(xhr) {
-                    alert('Error uploading file: ' + (xhr.responseJSON?.error || 'Unknown error'));
-                }
-            });
+            // Check file type
+            const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
+                                 'text/plain', 'image/png', 'image/jpeg', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Invalid file type. Please upload PDF, DOCX, TXT, or image files.');
+                return;
+            }
+            
+            // Submit the form
+            $('#uploadForm').submit();
         }
     });
 
