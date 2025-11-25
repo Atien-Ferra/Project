@@ -5,8 +5,7 @@
 {% block nav_links %}
     <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
     <a class="nav-link active" href="{{ url_for('quiz') }}">Quiz</a>
-    <a class="nav-link" href="{{ url_for('signup') }}">Sign Up</a>
-    <a class="nav-link" href="{{ url_for('forgotpassword') }}">Forgot Password</a>
+    <a class="nav-link" href="{{ url_for('logout') }}">Log Out</a>
 {% endblock %}
 
 {% block content %}
@@ -15,7 +14,7 @@
         <h1 class="h5 mb-0">Generated Quiz</h1>
         <div>
             <span class="badge text-bg-secondary me-2">5 mins</span>
-            <span class="badge text-bg-dark progress-text">0/5 answered</span>
+            <span class="badge text-bg-dark progress-text">0/{{ questions|length }} answered</span>
         </div>
     </div>
 
@@ -29,179 +28,28 @@
     </div>
 
     <div class="quiz-container">
-        <!-- Question 1 -->
-        <div class="card q-card shadow-sm mb-3 question-card active" id="question-1" data-question-id="1">
+        <!-- Dynamically generated questions -->
+        {% for question in questions %}
+        <div class="card q-card shadow-sm mb-3 question-card {% if loop.first %}active{% endif %}" id="question-{{ loop.index }}" data-question-id="{{ loop.index }}">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="small text-secondary">Question 1 of 5</div>
-                    <div class="small text-secondary">Web Development</div>
+                    <div class="small text-secondary">Question {{ loop.index }} of {{ questions|length }}</div>
+                    <div class="small text-secondary">{{ question.category }}</div>
                 </div>
-                <h2 class="h6">Which HTTP method is generally used to create a new resource?</h2>
+                <h2 class="h6">{{ question.question_text }}</h2>
                 <div class="mt-3">
-                    <div class="answer-option" data-answer-id="q1a1">
+                    {% for answer in question.answers %}
+                    <div class="answer-option" data-answer-id="{{ answer.id }}">
                         <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q1" id="q1a1">
-                            <label class="form-check-label w-100" for="q1a1">GET</label>
+                            <input class="form-check-input" type="radio" name="q{{ question.question_number }}" id="{{ answer.id }}" value="{{ answer.id }}">
+                            <label class="form-check-label w-100" for="{{ answer.id }}">{{ answer.text }}</label>
                         </div>
                     </div>
-                    <div class="answer-option" data-answer-id="q1a2">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q1" id="q1a2">
-                            <label class="form-check-label w-100" for="q1a2">POST</label>
-                        </div>
-                    </div>
-                    <div class="answer-option" data-answer-id="q1a3">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q1" id="q1a3">
-                            <label class="form-check-label w-100" for="q1a3">PUT</label>
-                        </div>
-                    </div>
-                    <div class="answer-option" data-answer-id="q1a4">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q1" id="q1a4">
-                            <label class="form-check-label w-100" for="q1a4">DELETE</label>
-                        </div>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
-
-        <!-- Question 2 -->
-        <div class="card q-card shadow-sm mb-3 question-card" id="question-2" data-question-id="2">
-            <div class="card-body">
-                <div class="small text-secondary mb-2">Question 2 of 5</div>
-                <h2 class="h6">In CSS, which property controls the space outside an element's border?</h2>
-                <div class="mt-3">
-                    <div class="answer-option" data-answer-id="q2a1">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q2" id="q2a1">
-                            <label class="form-check-label w-100" for="q2a1">Padding</label>
-                        </div>
-                    </div>
-                    <div class="answer-option" data-answer-id="q2a2">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q2" id="q2a2">
-                            <label class="form-check-label w-100" for="q2a2">Margin</label>
-                        </div>
-                    </div>
-                    <div class="answer-option" data-answer-id="q2a3">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q2" id="q2a3">
-                            <label class="form-check-label w-100" for="q2a3">Border</label>
-                        </div>
-                    </div>
-                    <div class="answer-option" data-answer-id="q2a4">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q2" id="q2a4">
-                            <label class="form-check-label w-100" for="q2a4">Gap</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Add Questions 3, 4, 5 following the same pattern -->
-        <!-- Question 3 -->
-        <div class="card q-card shadow-sm mb-3 question-card" id="question-3" data-question-id="3">
-            <div class="card-body">
-                <div class="small text-secondary mb-2">Question 3 of 5</div>
-                <h2 class="h6">What does SQL stand for?</h2>
-                <div class="mt-3">
-                    <div class="answer-option" data-answer-id="q3a1">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q3" id="q3a1">
-                            <label class="form-check-label w-100" for="q3a1">Structured Query Language</label>
-                        </div>
-                    </div>
-                    <div class="answer-option" data-answer-id="q3a2">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q3" id="q3a2">
-                            <label class="form-check-label w-100" for="q3a2">Stylish Question Language</label>
-                        </div>
-                    </div>
-                    <div class="answer-option" data-answer-id="q3a3">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q3" id="q3a3">
-                            <label class="form-check-label w-100" for="q3a3">System Query Logic</label>
-                        </div>
-                    </div>
-                    <div class="answer-option" data-answer-id="q3a4">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q3" id="q3a4">
-                            <label class="form-check-label w-100" for="q3a4">Server Query Language</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Question 4 -->
-        <div class="card q-card shadow-sm mb-3 question-card" id="question-4" data-question-id="4">
-            <div class="card-body">
-                <div class="small text-secondary mb-2">Question 4 of 5</div>
-                <h2 class="h6">Which tag makes the largest default heading in HTML?</h2>
-                <div class="mt-3">
-                    <div class="answer-option" data-answer-id="q4a1">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q4" id="q4a1">
-                            <label class="form-check-label w-100" for="q4a1">&lt;h1&gt;</label>
-                        </div>
-                    </div>
-                    <div class="answer-option" data-answer-id="q4a2">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q4" id="q4a2">
-                            <label class="form-check-label w-100" for="q4a2">&lt;h6&gt;</label>
-                        </div>
-                    </div>
-                    <div class="answer-option" data-answer-id="q4a3">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q4" id="q4a3">
-                            <label class="form-check-label w-100" for="q4a3">&lt;header&gt;</label>
-                        </div>
-                    </div>
-                    <div class="answer-option" data-answer-id="q4a4">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q4" id="q4a4">
-                            <label class="form-check-label w-100" for="q4a4">&lt;title&gt;</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Question 5 -->
-        <div class="card q-card shadow-sm mb-4 question-card" id="question-5" data-question-id="5">
-            <div class="card-body">
-                <div class="small text-secondary mb-2">Question 5 of 5</div>
-                <h2 class="h6">Which is a NoSQL database?</h2>
-                <div class="mt-3">
-                    <div class="answer-option" data-answer-id="q5a1">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q5" id="q5a1">
-                            <label class="form-check-label w-100" for="q5a1">PostgreSQL</label>
-                        </div>
-                    </div>
-                    <div class="answer-option" data-answer-id="q5a2">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q5" id="q5a2">
-                            <label class="form-check-label w-100" for="q5a2">MySQL</label>
-                        </div>
-                    </div>
-                    <div class="answer-option" data-answer-id="q5a3">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q5" id="q5a3">
-                            <label class="form-check-label w-100" for="q5a3">MongoDB</label>
-                        </div>
-                    </div>
-                    <div class="answer-option" data-answer-id="q5a4">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q5" id="q5a4">
-                            <label class="form-check-label w-100" for="q5a4">SQLite</label>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 
     <div class="d-flex justify-content-between gap-2">

@@ -9,10 +9,10 @@
   <h1>Welcome to Focus Flow</h1>
   <p>Your productivity companion for quizzes, tasks, and more!</p>
   {% if 'user' in session %}
-    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+    <a href="{{ quiz.url_for('quiz.dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
   {% else %}
-    <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
-    <a href="{{ url_for('signup') }}" class="btn btn-secondary">Sign Up</a>
+    <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login</a>
+    <a href="{{ url_for('auth.signup') }}" class="btn btn-secondary">Sign Up</a>
   {% endif %}
 </div>
 {% endblock %}

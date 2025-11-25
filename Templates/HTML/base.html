@@ -11,15 +11,15 @@
 <body>
   <nav class="navbar navbar-light bg-white border-bottom">
     <div class="container">
-      <a class="navbar-brand brand" href="{{ url_for('index') }}">Focus Flow</a>
+      <a class="navbar-brand brand" href="{{ url_for('main.index') }}">Focus Flow</a>
       <div class="d-flex gap-3">
         {% if current_user.is_authenticated %}
-          <span class="navbar-text">Hello, {{ current_user.name }}</span>
-          <a class="btn btn-outline-danger" href="{{ url_for('logout') }}">Logout</a>
+          <span class="navbar-link">Hello, {{ current_user.name }}</span>
+          <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
         {% else %}
-          <a class="btn btn-outline-primary" href="{{ url_for('login') }}">Login</a>
-          <a class="btn btn-outline-secondary" href="{{ url_for('signup') }}">Sign Up</a>
-          <a class="btn btn-outline-warning" href="{{ url_for('forgotpassword') }}">Forgot Password</a>
+          <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+          <a class="nav-link" href="{{ url_for('auth.signup') }}">Sign Up</a>
+          <a class="nav-link" href="{{ url_for('auth.forgotpassword') }}">Forgot Password</a>
         {% endif %}
 
         {% block nav_links %}{% endblock %}
