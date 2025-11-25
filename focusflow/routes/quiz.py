@@ -4,10 +4,9 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from bson.objectid import ObjectId
-
 from db import get_db
 from ..services.files import allowed_file, extract_text_from_file
-from ..services.questions import generate_questions_from_text_lmstudio  # your existing function
+from ..services.questions import generate_questions_from_text_lmstudio
 
 quiz_bp = Blueprint("quiz", __name__)
 
