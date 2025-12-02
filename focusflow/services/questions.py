@@ -84,8 +84,8 @@ def extract_text_from_pdf(path: str, *, ocr_fallback: bool = True, min_chars: in
         parts = []
         for page in doc:
             # "text" gives readable layout; you can also try "blocks" for more structure
-            parts.append(page.get_text("text") or "")
-        doc.close()
+            parts.append(page.get_text("text") or "blocks")
+        doc.close() 
         text = "\n".join(parts).strip()
     except Exception:
         text = ""

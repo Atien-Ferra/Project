@@ -19,7 +19,6 @@
                     <div class="text-secondary small">Keep up the good work!</div>
                 </div>
             </div>
-            
         </div>
     </div>
 
@@ -53,29 +52,17 @@
         </div>
     </div>
 
-    <!-- Tasks Section -->
-    <div class="card shadow-sm mb-4 tasks-section">
-        <div class="card-body">
-            <h3 class="h6 mb-3">Today's Tasks</h3>
-            <div class="mb-3">
-                <div class="input-group">
-                    <input type="text" class="form-control" id="newTask" placeholder="Add a new task...">
-                    <button class="btn btn-dark" type="button" id="addTaskBtn">Add Task</button>
-                </div>
-            </div>
-            <div id="tasksContainer">
-                <!-- Tasks will be added here dynamically -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Empty state -->
+     <!-- Tasks Section -->
     <div class="card card-empty bg-white shadow-sm text-center py-5 empty-state">
         <div class="card-body">
             <div class="display-6 mb-2">✓</div>
             <h4 class="h6">No tasks yet</h4>
             <p class="text-secondary small mb-3">Add your first task to get organized.</p>
-            <button class="btn btn-dark" id="addFirstTask">Add Your First Task</button>
+            <button class="btn btn-dark" id="openTaskModal" type="button">Add Your First Task</button>
+
+             <div id="tasksContainer">
+                <!-- Tasks will be added here dynamically -->
+            </div>
         </div>
     </div>
 
@@ -90,6 +77,28 @@
             </ul>
         </div>
     </div>
+</div>
+
+<!-- Task Modal (keep outside of the input-group) -->
+<div id="taskModalBackdrop"
+     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1040;"></div>
+
+<div id="taskModal"
+     style="display:none; position:fixed; inset:0; place-items:center; z-index:1050;">
+  <div style="background:white; padding:16px; border-radius:12px; width:min(480px, 92vw);">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 style="margin:0;">Add a task</h3>
+      <button type="button" id="closeTaskModal" aria-label="Close">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('quiz.add_task') }}" style="margin-top:12px;">
+      <input id="taskTitleInput" name="task_title" placeholder="Task title" required style="width:100%; padding:10px;">
+      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+        <button type="button" id="cancelTaskModal">Cancel</button>
+        <button type="submit">Save</button>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}
 

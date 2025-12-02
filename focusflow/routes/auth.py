@@ -1,12 +1,22 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+import os, secrets, hashlib
+from datetime import datetime, timedelta, timezone
+
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import UserMixin, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
-
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from ..extensions import login_manager
 from db import get_db
 
 auth_bp = Blueprint("auth", __name__)
+limiter = Limiter(get_remote_address)
+
+PEPPER = os.getenv("PASSWORD_PEPPER")
+if not PEPPER:
+    raise RuntimeError("PASSWORD_PEPPER not set")
+
 
 class User(UserMixin):
     def __init__(self, user_id: str, name: str, email: str):
@@ -47,6 +57,7 @@ def signup():
         name = request.form.get("name")
         email = request.form.get("email")
         password = request.form.get("password")
+        password_with_pepper = password + PEPPER
         confirm_password = request.form.get("confirm_password")
         terms = request.form.get("terms")
 
@@ -69,7 +80,11 @@ def signup():
             flash("Email already registered", "error")
             return render_template("signup.html")
 
-        hashed_pw = generate_password_hash(password)
+        hashed_pw = generate_password_hash(
+            password_with_pepper,
+            method="scrypt",      
+            salt_length=16        
+        )
         result = users_collection.insert_one({
             "name": name,
             "email": email,
@@ -97,9 +112,43 @@ def logout():
 @auth_bp.route("/forgotpassword", methods=["GET", "POST"])
 def forgotpassword():
     if request.method == "POST":
-        flash("If the email exists, a reset link has been sent", "success")
+        email = (request.form.get("email") or "").strip().lower()
+
+        # Always show success to avoid leaking whether an email exists
+        msg = "If the email exists, a reset link has been sent."
+
+        if not email:
+            flash(msg, "success")
+            return redirect(url_for("auth.login"))
+
+        db = get_db()
+        users = db["users"]
+        user = users.find_one({"email": email})
+
+        if user:
+            # 1) create token
+            token = secrets.token_urlsafe(32)
+            token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+            expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
+
+            # 2) store hashed token + expiry
+            users.update_one(
+                {"_id": user["_id"]},
+                {"$set": {"reset_token_hash": token_hash, "reset_token_expires": expires_at}},
+            )
+
+            # 3) build link
+            reset_link = url_for("auth.reset_password", token=token, _external=True)
+
+            # TODO: send email here with reset_link.
+            # For development, log it:
+            current_app.logger.warning("Password reset link for %s: %s", email, reset_link)
+
+        flash(msg, "success")
         return redirect(url_for("auth.login"))
+
     return render_template("forgotpassword.html")
+
 
 
 @auth_bp.route('/updatepassword', methods=['GET', 'POST'])

@@ -74,6 +74,26 @@ def dashboard():
         tasks_done=user_doc.get("tasks_done", 0),
     )
 
+@quiz_bp.route("/tasks/add", methods=["POST"])
+@login_required
+def add_task():
+    title = (request.form.get("task_title") or "").strip()
+    if not title:
+        flash("Task title is required.", "error")
+        return redirect(url_for("quiz.dashboard"))
+
+    db = get_db()
+    db["tasks"].insert_one({
+        "user_id": ObjectId(current_user.id),
+        "title": title,
+        "done": False,
+        "created_at": datetime.now(),
+    })
+
+    flash("Task added.", "success")
+    return redirect(url_for("quiz.dashboard"))
+
+
 @quiz_bp.route("/quiz", methods=["GET", "POST"])
 @login_required
 def quiz():
