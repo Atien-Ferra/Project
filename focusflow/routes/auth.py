@@ -1,13 +1,22 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+import os, secrets, hashlib
+from datetime import datetime, timedelta, timezone
+
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import UserMixin, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
-import os, secrets, hashlib
-from datetime import datetime, timezone, timedelta
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from ..extensions import login_manager
 from db import get_db
 
 auth_bp = Blueprint("auth", __name__)
+limiter = Limiter(get_remote_address)
+
+PEPPER = os.getenv("PASSWORD_PEPPER")
+if not PEPPER:
+    raise RuntimeError("PASSWORD_PEPPER not set")
+
 
 class User(UserMixin):
     def __init__(self, user_id: str, name: str, email: str):
@@ -52,6 +61,7 @@ def signup():
         name = request.form.get("name")
         email = request.form.get("email")
         password = request.form.get("password")
+        password_with_pepper = password + PEPPER
         confirm_password = request.form.get("confirm_password")
         terms = request.form.get("terms")
 
@@ -74,7 +84,11 @@ def signup():
             flash("Email already registered", "error")
             return render_template("signup.html")
 
-        hashed_pw = generate_password_hash(password)
+        hashed_pw = generate_password_hash(
+            password_with_pepper,
+            method="scrypt",      
+            salt_length=16        
+        )
         result = users_collection.insert_one({
             "name": name,
             "email": email,

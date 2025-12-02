@@ -79,3 +79,33 @@ $(document).ready(function() {
         $('.tasks-section').hide();
     }
 });
+
+ const openBtn = document.getElementById("openTaskModal");
+  const modal = document.getElementById("taskModal");
+  const backdrop = document.getElementById("taskModalBackdrop");
+  const closeBtn = document.getElementById("closeTaskModal");
+  const cancelBtn = document.getElementById("cancelTaskModal");
+  const newTask = document.getElementById("newTask");
+  const taskTitleInput = document.getElementById("taskTitleInput");
+
+  function openModal(prefill) {
+    modal.style.display = "grid";
+    backdrop.style.display = "block";
+    if (prefill) taskTitleInput.value = prefill;
+    taskTitleInput.focus();
+  }
+  function closeModal() {
+    modal.style.display = "none";
+    backdrop.style.display = "none";
+  }
+
+  openBtn.addEventListener("click", () => openModal(newTask.value.trim()));
+  document.getElementById("addFirstTask")?.addEventListener("click", () => openModal(""));
+
+  closeBtn.addEventListener("click", closeModal);
+  cancelBtn.addEventListener("click", closeModal);
+  backdrop.addEventListener("click", closeModal);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeModal();
+  });
