@@ -9,7 +9,6 @@ import pytesseract
 from typing import Optional
 import os
 from pdf2image import convert_from_path
-import pytesseract
 import pymupdf as fitz
 
 def _normalize_ws(s: str) -> str:

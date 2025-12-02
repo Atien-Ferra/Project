@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import UserMixin, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
-
+import os, secrets, hashlib
+from datetime import datetime, timezone, timedelta
 from ..extensions import login_manager
 from db import get_db
 
@@ -25,13 +26,17 @@ def load_user(user_id):
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
+        email = (request.form.get("email") or "").strip().lower()
+        password = request.form.get("password") or ""
         remember = bool(request.form.get("remember"))
+
+        pepper = os.getenv("PASSWORD_PEPPER", "")
+        password_to_check = password + pepper
 
         db = get_db()
         user_doc = db["users"].find_one({"email": email})
-        if user_doc and check_password_hash(user_doc["password"], password):
+
+        if user_doc and check_password_hash(user_doc["password"], password_to_check):
             user = User(str(user_doc["_id"]), user_doc.get("name", ""), user_doc.get("email", ""))
             login_user(user, remember=remember)
             flash("Login successful!", "success")
@@ -102,25 +107,43 @@ def forgotpassword():
     return render_template("forgotpassword.html")
 
 
-@auth_bp.route('/updatepassword', methods=['GET', 'POST'])
-@login_required
-def updatepassword():
-    if request.method == 'POST':
-        current_password = request.form.get('current_password')
-        new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
-        
-        user_email = current_user.id
-        user_data = users.get(user_email)
-        
-        if user_data and user_data['password'] == current_password:
-            if new_password == confirm_password:
-                users[user_email]['password'] = new_password
-                flash('Password updated successfully!', 'success')
-                return redirect(url_for('profile'))
-            else:
-                flash('New passwords do not match', 'error')
-        else:
-            flash('Current password is incorrect', 'error')
-    
-    return render_template('updatepassword.html')
+@auth_bp.route("/updatepassword/<token>", methods=["GET", "POST"])
+def reset_password(token: str):
+    if request.method == "POST":
+        new_password = request.form.get("new_password") or ""
+        confirm = request.form.get("confirm_password") or ""
+
+        if len(new_password) < 8:
+            flash("Password must be at least 8 characters.", "error")
+            return render_template("resetpassword.html")
+
+        if new_password != confirm:
+            flash("Passwords do not match.", "error")
+            return render_template("resetpassword.html")
+
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        now = datetime.now(timezone.utc)
+
+        db = get_db()
+        users = db["users"]
+
+        user = users.find_one({
+            "reset_token_hash": token_hash,
+            "reset_token_expires": {"$gt": now},
+        })
+
+        if not user:
+            flash("Reset link is invalid or has expired.", "error")
+            return redirect(url_for("auth.forgotpassword"))
+
+        new_hash = generate_password_hash(new_password, method="scrypt", salt_length=16)
+
+        users.update_one(
+            {"_id": user["_id"]},
+            {"$set": {"password": new_hash}, "$unset": {"reset_token_hash": "", "reset_token_expires": ""}},
+        )
+
+        flash("Password updated. Please log in.", "success")
+        return redirect(url_for("auth.login"))
+
+    return render_template("resetpassword.html")
