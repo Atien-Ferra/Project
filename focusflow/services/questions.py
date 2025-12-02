@@ -9,7 +9,6 @@ import pytesseract
 from typing import Optional
 import os
 from pdf2image import convert_from_path
-import pytesseract
 import pymupdf as fitz
 
 def _normalize_ws(s: str) -> str:
@@ -84,8 +83,8 @@ def extract_text_from_pdf(path: str, *, ocr_fallback: bool = True, min_chars: in
         parts = []
         for page in doc:
             # "text" gives readable layout; you can also try "blocks" for more structure
-            parts.append(page.get_text("text") or "blocks")
-        doc.close() 
+            parts.append(page.get_text("text") or "")
+        doc.close()
         text = "\n".join(parts).strip()
     except Exception:
         text = ""

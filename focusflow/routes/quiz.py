@@ -140,3 +140,49 @@ def quiz():
         return jsonify({"score": score, "total": total, "percentage": percentage, "passed": passed})
 
     return render_template("quiz.html", questions=current_questions)
+
+@quiz_bp.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+    db = get_db()
+    users = db["users"]
+
+    user_doc = users.find_one({"_id": ObjectId(current_user.id)})
+    if not user_doc:
+        flash("User not found", "error")
+        return redirect(url_for("auth.login"))
+
+    if request.method == "POST":
+        name = (request.form.get("name") or "").strip()
+        email = (request.form.get("email") or "").strip().lower()
+
+        if not name or not email:
+            flash("Name and email are required.", "error")
+            return redirect(url_for("quiz.profile"))
+
+        # prevent changing email to one that already exists
+        exists = users.find_one({"email": email, "_id": {"$ne": ObjectId(current_user.id)}})
+        if exists:
+            flash("That email is already in use.", "error")
+            return redirect(url_for("quiz.profile"))
+
+        users.update_one(
+            {"_id": ObjectId(current_user.id)},
+            {"$set": {"name": name, "email": email}},
+        )
+
+        # keep Flask-Login user object in sync for the current request/session
+        current_user.name = name
+        current_user.email = email
+
+        flash("Profile updated.", "success")
+        return redirect(url_for("quiz.profile"))
+
+    return render_template(
+        "profile.html",
+        user_name=user_doc.get("name", ""),
+        user_email=user_doc.get("email", ""),
+        streak=user_doc.get("streak", 0),
+        quizzes_taken=user_doc.get("quizzes_taken", 0),
+        tasks_done=user_doc.get("tasks_done", 0),
+    )

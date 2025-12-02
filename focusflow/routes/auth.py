@@ -11,7 +11,6 @@ from ..extensions import login_manager
 from db import get_db
 
 auth_bp = Blueprint("auth", __name__)
-limiter = Limiter(get_remote_address)
 
 PEPPER = os.getenv("PASSWORD_PEPPER")
 if not PEPPER:
