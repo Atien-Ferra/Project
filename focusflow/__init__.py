@@ -26,7 +26,7 @@ def create_app():
         static_folder=os.path.join(project_root, "Static"),
     )
     app.config.update(
-        SECRET_KEY=os.getenv("SECRET_KEY", "change-me"),
+        SECRET_KEY=os.getenv("SECRET_KEY"),
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_SECURE=not app.debug,      # True in production (HTTPS)
@@ -38,7 +38,7 @@ def create_app():
     Limiter(get_remote_address, app=app, default_limits=["200 per day", "50 per hour"])
     Talisman(app, content_security_policy=None)  # start simple; add CSP later
 
-    app.secret_key = os.getenv("SECRET_KEY", "your-secret-key-here-change-in-production")
+    app.secret_key = os.getenv("SECRET_KEY")
     app.config["UPLOAD_FOLDER"] = os.path.join(project_root, "Static", "uploads")
     app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 

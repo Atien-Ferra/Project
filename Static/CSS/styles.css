@@ -10,6 +10,7 @@ body {
     max-width: 480px;
 }
 
+/*1 rem = 16px */
 .hero {
     padding: 6rem 0;
 }
