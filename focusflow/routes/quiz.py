@@ -117,3 +117,136 @@ def profile():
         quizzes_taken=user_doc.get("quizzes_taken", 0),
         tasks_done=user_doc.get("tasks_done", 0),
     )
+
+
+@quiz_bp.route("/api/increment-streak", methods=["POST"])
+@login_required
+def increment_streak():
+    """Increment the current user's streak and return the updated value."""
+    db = get_db()
+    users = db["users"]
+    
+    user = users.find_one({"_id": ObjectId(current_user.id)})
+    if not user:
+        return jsonify({"success": False, "error": "User not found"}), 404
+    
+    # Increment the streak by 1
+    result = users.update_one(
+        {"_id": ObjectId(current_user.id)},
+        {"$inc": {"streak": 1}}
+    )
+    
+    if result.modified_count > 0:
+        # Get the updated user document to return the new streak value
+        updated_user = users.find_one({"_id": ObjectId(current_user.id)})
+        return jsonify({
+            "success": True,
+            "streak": updated_user.get("streak", 0)
+        }), 200
+    else:
+        return jsonify({"success": False, "error": "Failed to update streak"}), 500
+
+
+@quiz_bp.route("/api/tasks", methods=["GET"])
+@login_required
+def get_tasks():
+    """Get all tasks for the current user."""
+    db = get_db()
+    tasks_collection = db["tasks"]
+    
+    tasks = list(tasks_collection.find(
+        {"user_id": ObjectId(current_user.id)}
+    ).sort("created_at", -1))
+    
+    # Convert ObjectId to string for JSON serialization
+    for task in tasks:
+        task["_id"] = str(task["_id"])
+    
+    return jsonify({"success": True, "tasks": tasks}), 200
+
+
+@quiz_bp.route("/api/tasks", methods=["POST"])
+@login_required
+def create_task():
+    """Create a new task for the current user."""
+    data = request.get_json()
+    title = (data.get("title") or "").strip()
+    
+    if not title:
+        return jsonify({"success": False, "error": "Task title is required"}), 400
+    
+    db = get_db()
+    tasks_collection = db["tasks"]
+    
+    result = tasks_collection.insert_one({
+        "user_id": ObjectId(current_user.id),
+        "title": title,
+        "done": False,
+        "created_at": datetime.now(),
+    })
+    
+    return jsonify({
+        "success": True,
+        "task_id": str(result.inserted_id),
+        "title": title,
+        "done": False
+    }), 201
+
+
+@quiz_bp.route("/api/tasks/<task_id>", methods=["DELETE"])
+@login_required
+def delete_task(task_id):
+    """Delete a task for the current user."""
+    db = get_db()
+    tasks_collection = db["tasks"]
+    
+    try:
+        result = tasks_collection.delete_one({
+            "_id": ObjectId(task_id),
+            "user_id": ObjectId(current_user.id)
+        })
+        
+        if result.deleted_count > 0:
+            return jsonify({"success": True}), 200
+        else:
+            return jsonify({"success": False, "error": "Task not found"}), 404
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
+
+@quiz_bp.route("/api/tasks/<task_id>/toggle", methods=["PATCH"])
+@login_required
+def toggle_task(task_id):
+    """Toggle the completion status of a task."""
+    db = get_db()
+    tasks_collection = db["tasks"]
+    
+    try:
+        # First, get the current task to toggle its done status
+        task = tasks_collection.find_one({
+            "_id": ObjectId(task_id),
+            "user_id": ObjectId(current_user.id)
+        })
+        
+        if not task:
+            return jsonify({"success": False, "error": "Task not found"}), 404
+        
+        new_done_status = not task.get("done", False)
+        
+        result = tasks_collection.update_one(
+            {
+                "_id": ObjectId(task_id),
+                "user_id": ObjectId(current_user.id)
+            },
+            {"$set": {"done": new_done_status}}
+        )
+        
+        if result.modified_count > 0:
+            return jsonify({
+                "success": True,
+                "done": new_done_status
+            }), 200
+        else:
+            return jsonify({"success": False, "error": "Failed to update task"}), 500
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400

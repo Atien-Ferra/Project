@@ -283,7 +283,6 @@ def reset_password(token: str):
         if not user:
             flash("Reset link is invalid or has expired.", "error")
             return redirect(url_for("auth.forgotpassword"))
-
         pepper = os.getenv("PASSWORD_PEPPER")
         new_hash = generate_password_hash(new_password + pepper, method="scrypt", salt_length=16)
 
