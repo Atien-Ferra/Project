@@ -3,9 +3,9 @@
 {% block title %}Dashboard • Focus Flow{% endblock %}
 
 {% block nav_links %}
+    <a class="nav-link" href="{{ url_for('quiz.profile') }}">Profile</a>
     <a class="nav-link active" href="{{ url_for('quiz.dashboard') }}">Dashboard</a>
     <a class="nav-link" href="{{ url_for('quiz.quiz') }}">Quiz</a>
-    <a class="nav-link" href="{{ url_for('auth.logout') }}">Log Out</a>
 {% endblock %}
 
 {% block content %}
@@ -53,15 +53,25 @@
     </div>
 
      <!-- Tasks Section -->
-    <div class="card card-empty bg-white shadow-sm text-center py-5 empty-state">
+    <div class="card shadow-sm mb-4">
         <div class="card-body">
-            <div class="display-6 mb-2">✓</div>
-            <h4 class="h6">No tasks yet</h4>
-            <p class="text-secondary small mb-3">Add your first task to get organized.</p>
-            <button class="btn btn-dark" id="openTaskModal" type="button">Add Your First Task</button>
-
-             <div id="tasksContainer">
+            <h3 class="h6 mb-3">Your Tasks</h3>
+            
+            <!-- Tasks Container - shown when tasks exist -->
+            <div id="tasksContainer">
                 <!-- Tasks will be added here dynamically -->
+            </div>
+            
+            <!-- Empty State - shown when no tasks -->
+            <div class="empty-state text-center py-4">
+                <div class="display-6 mb-2">✓</div>
+                <h4 class="h6">No tasks yet</h4>
+                <p class="text-secondary small mb-3">Add your first task to get organized.</p>
+            </div>
+            
+            <!-- Add Task Button - always visible -->
+            <div class="text-center mt-3">
+                <button class="btn btn-dark" id="openTaskModal" type="button">Add Your First Task</button>
             </div>
         </div>
     </div>
@@ -79,25 +89,29 @@
     </div>
 </div>
 
-<!-- Task Modal (keep outside of the input-group) -->
+<!-- Task Modal -->
 <div id="taskModalBackdrop"
      style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1040;"></div>
 
 <div id="taskModal"
-     style="display:none; position:fixed; inset:0; place-items:center; z-index:1050;">
-  <div style="background:white; padding:16px; border-radius:12px; width:min(480px, 92vw);">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h3 style="margin:0;">Add a task</h3>
-      <button type="button" id="closeTaskModal" aria-label="Close">✕</button>
+     style="display:none; position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:1050;">
+  <div class="card shadow-lg" style="width:100%; max-width:500px; margin:20px;">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Add a Task</h5>
+      <button type="button" id="closeTaskModal" class="btn-close btn-close-white" aria-label="Close"></button>
     </div>
 
-    <form method="POST" action="{{ url_for('quiz.add_task') }}" style="margin-top:12px;">
-      <input id="taskTitleInput" name="task_title" placeholder="Task title" required style="width:100%; padding:10px;">
-      <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
-        <button type="button" id="cancelTaskModal">Cancel</button>
-        <button type="submit">Save</button>
+    <div class="card-body">
+      <input type="hidden" id="csrfToken" value="{{ csrf_token() }}">
+      <div class="mb-3">
+        <label for="taskTitleInput" class="form-label">Task Title</label>
+        <input type="text" id="taskTitleInput" class="form-control" placeholder="Enter task title">
       </div>
-    </form>
+      <div class="d-flex gap-2 justify-content-end">
+        <button type="button" id="cancelTaskModal" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="saveTaskBtn" class="btn btn-dark">Save Task</button>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

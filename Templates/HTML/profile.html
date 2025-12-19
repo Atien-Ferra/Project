@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 
 {% block title %}Profile{% endblock %}
+{% block nav_links %}
+    <a class="nav-link" href="{{ url_for('quiz.dashboard') }}">Dashboard</a>
+{% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='JS/profile.js') }}"></script>
 {% endblock %}
