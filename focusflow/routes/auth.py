@@ -307,37 +307,35 @@ def reset_password(token: str):
 def profile():
     db = get_db()
     profiles_collection = db["profiles"]
+    users_collection = db["users"]
 
     if request.method == "POST":
-        # Update profile data
-        display_name = request.form.get("name")
-        session_length_mins = int(request.form.get("studyPrefs.sessionLengthMins", 0))
-        break_long_mins = int(request.form.get("studyPrefs.breakLongMins", 0))
-        preferred_difficulty = request.form.get("studyPrefs.preferredDifficulty")
-        updated_at = datetime.now(timezone.utc)
+        try:
+            session_length_mins = int(request.form.get("studyPrefs.sessionLengthMins", 0))
+            break_long_mins = int(request.form.get("studyPrefs.breakLongMins", 0))
+            preferred_difficulty = request.form.get("studyPrefs.preferredDifficulty")
+            updated_at = datetime.now(timezone.utc)
 
-        profiles_collection.update_one(
-            {"user_id": ObjectId(current_user.id)},
-            {
-                "$set": {
-                    "displayName": display_name,
-                    "studyPrefs": {
-                        "sessionLengthMins": session_length_mins,
-                        "breakLongMins": break_long_mins,
-                        "preferredDifficulty": preferred_difficulty,
-                    },
-                    "updatedAt": updated_at,
-                }
-            },
-        )
-        flash("Profile updated successfully.", "success")
-        return redirect(url_for("auth.profile"))
+            profiles_collection.update_one(
+                {"user_id": ObjectId(current_user.id)},
+                {
+                    "$set": {
+                        "studyPrefs.sessionLengthMins": session_length_mins,
+                        "studyPrefs.breakLongMins": break_long_mins,
+                        "studyPrefs.preferredDifficulty": preferred_difficulty,
+                        "updatedAt": updated_at,
+                    }
+                },
+            )
+            return {"message": "Preferences updated successfully."}, 200
+        except Exception as e:
+            return {"error": str(e)}, 400
 
-    # Fetch the profile data for the logged-in user
+    # Fetch user and profile data
+    user_data = users_collection.find_one({"_id": ObjectId(current_user.id)})
     profile_data = profiles_collection.find_one({"user_id": ObjectId(current_user.id)})
 
     if not profile_data:
-        # Create a new profile if it doesn't exist
         now = datetime.now(timezone.utc)
         profile_data = {
             "user_id": ObjectId(current_user.id),
@@ -351,5 +349,12 @@ def profile():
             "updatedAt": now,
         }
         profiles_collection.insert_one(profile_data)
+
+    profile_data.update({
+        "email": user_data.get("email"),
+        "tasks_done": user_data.get("tasks_done", 0),
+        "quizzes_taken": user_data.get("quizzes_taken", 0),
+        "streak": user_data.get("streak", 0),
+    })
 
     return render_template("profile.html", profile=profile_data)

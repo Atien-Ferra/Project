@@ -2,8 +2,11 @@
 
 {% block title %}Profile{% endblock %}
 {% block nav_links %}
-    <a class="nav-link" href="{{ url_for('quiz.dashboard') }}">Dashboard</a>
+    <a class="nav-link active" href="{{ url_for('quiz.dashboard') }}">Dashboard</a>
+    <a class="nav-link" href="{{ url_for('quiz.quiz') }}">Quiz</a>
+    <a class="nav-link" href="{{ url_for('auth.logout') }}">Log Out</a>
 {% endblock %}
+
 {% block scripts %}
 <script src="{{ url_for('static', filename='JS/profile.js') }}"></script>
 {% endblock %}
@@ -13,28 +16,50 @@
     <h1 class="text-center">Profile</h1>
     <div class="card">
       <div class="card-body">
-        <form id="update-profile-form">
+        <form id="update-profile-form" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">
-            <label for="name" class="form-label"><strong>Name:</strong></label>
-            <input type="text" id="name" name="name" class="form-control" value="{{ profile.name }}" required>
+            <label class="form-label"><strong>Name:</strong></label>
+            <p>{{ profile.displayName }}</p>
           </div>
           <div class="mb-3">
-            <label for="email" class="form-label"><strong>Email:</strong></label>
-            <input type="email" id="email" name="email" class="form-control" value="{{ profile.email }}" required>
+            <label class="form-label"><strong>Email:</strong></label>
+            <p>{{ profile.email }}</p>
           </div>
           <div class="mb-3">
-            <label for="streak" class="form-label"><strong>Streak:</strong></label>
-            <input type="number" id="streak" name="streak" class="form-control" value="{{ profile.streak }}" required>
+            <label class="form-label"><strong>Streak:</strong></label>
+            <p>{{ profile.streak }}</p>
           </div>
           <div class="mb-3">
-            <label for="quizzes_taken" class="form-label"><strong>Quizzes Taken:</strong></label>
-            <input type="number" id="quizzes_taken" name="quizzes_taken" class="form-control" value="{{ profile.quizzes_taken }}" required>
+            <label class="form-label"><strong>Quizzes Taken:</strong></label>
+            <p>{{ profile.quizzes_taken }}</p>
           </div>
           <div class="mb-3">
-            <label for="tasks_completed" class="form-label"><strong>Tasks Completed:</strong></label>
-            <input type="number" id="tasks_completed" name="tasks_completed" class="form-control" value="{{ profile.tasks_completed }}" required>
+            <label class="form-label"><strong>Tasks Completed:</strong></label>
+            <p>{{ profile.tasks_done }}</p>
           </div>
-          <button type="submit" class="btn btn-primary">Update Profile</button>
+          <div class="mb-3">
+            <label class="form-label"><strong>Session Length (mins):</strong></label>
+            <p id="sessionLengthText">{{ profile.studyPrefs.sessionLengthMins }}</p>
+            <input type="number" id="sessionLengthInput" name="studyPrefs.sessionLengthMins" class="form-control d-none" value="{{ profile.studyPrefs.sessionLengthMins }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label"><strong>Break Length (mins):</strong></label>
+            <p id="breakLengthText">{{ profile.studyPrefs.breakLongMins }}</p>
+            <input type="number" id="breakLengthInput" name="studyPrefs.breakLongMins" class="form-control d-none" value="{{ profile.studyPrefs.breakLongMins }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label"><strong>Preferred Difficulty:</strong></label>
+            <p id="preferredDifficultyText">{{ profile.studyPrefs.preferredDifficulty }}</p>
+            <select id="preferredDifficultyInput" name="studyPrefs.preferredDifficulty" class="form-control d-none" required>
+              <option value="easy" {% if profile.studyPrefs.preferredDifficulty == 'easy' %}selected{% endif %}>Easy</option>
+              <option value="medium" {% if profile.studyPrefs.preferredDifficulty == 'medium' %}selected{% endif %}>Medium</option>
+              <option value="hard" {% if profile.studyPrefs.preferredDifficulty == 'hard' %}selected{% endif %}>Hard</option>
+            </select>
+          </div>
+          <button type="button" id="editButton" class="btn btn-secondary">Edit</button>
+          <button type="submit" id="saveButton" class="btn btn-primary d-none">Save Changes</button>
+          <button type="button" id="cancelButton" class="btn btn-danger d-none">Cancel</button>
         </form>
       </div>
     </div>
