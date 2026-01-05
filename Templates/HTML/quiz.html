@@ -27,7 +27,9 @@
         </div>
     </div>
 
-    <div class="quiz-container">
+    <form id="quizForm" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="quiz-container">
         <!-- Dynamically generated questions -->
         {% for question in questions %}
         <div class="card q-card shadow-sm mb-3 question-card {% if loop.first %}active{% endif %}" id="question-{{ loop.index }}" data-question-id="{{ loop.index }}">
@@ -56,10 +58,11 @@
         <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Back to Dashboard</a>
         <div>
             <button class="btn btn-outline-secondary prev-btn" disabled>Previous</button>
-            <button class="btn btn-outline-secondary next-btn">Next</button>
-            <button class="btn btn-dark" id="submitQuiz" disabled>Submit Quiz</button>
+            <button class="btn btn-outline-secondary next-btn" type="button">Next</button>
+            <button class="btn btn-dark" id="submitQuiz" type="submit" disabled>Submit Quiz</button>
         </div>
     </div>
+    </form>
 </div>
 {% endblock %}
 
