@@ -99,7 +99,6 @@ def signup():
             "tasks_done": 0,
             "files": []
         })
-
         user = User(str(result.inserted_id), name, email)
         login_user(user)
         flash("Account created successfully!", "success")
@@ -301,4 +300,56 @@ def reset_password(token: str):
         flash("Password updated. Please log in.", "success")
         return redirect(url_for("auth.login"))
 
-    return render_template("updatepassword.html", token=token)
+    return render_template("resetpassword.html")
+
+@auth_bp.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+    db = get_db()
+    profiles_collection = db["profiles"]
+
+    if request.method == "POST":
+        # Update profile data
+        display_name = request.form.get("name")
+        session_length_mins = int(request.form.get("studyPrefs.sessionLengthMins", 0))
+        break_long_mins = int(request.form.get("studyPrefs.breakLongMins", 0))
+        preferred_difficulty = request.form.get("studyPrefs.preferredDifficulty")
+        updated_at = datetime.now(timezone.utc)
+
+        profiles_collection.update_one(
+            {"user_id": ObjectId(current_user.id)},
+            {
+                "$set": {
+                    "displayName": display_name,
+                    "studyPrefs": {
+                        "sessionLengthMins": session_length_mins,
+                        "breakLongMins": break_long_mins,
+                        "preferredDifficulty": preferred_difficulty,
+                    },
+                    "updatedAt": updated_at,
+                }
+            },
+        )
+        flash("Profile updated successfully.", "success")
+        return redirect(url_for("auth.profile"))
+
+    # Fetch the profile data for the logged-in user
+    profile_data = profiles_collection.find_one({"user_id": ObjectId(current_user.id)})
+
+    if not profile_data:
+        # Create a new profile if it doesn't exist
+        now = datetime.now(timezone.utc)
+        profile_data = {
+            "user_id": ObjectId(current_user.id),
+            "displayName": current_user.name,
+            "studyPrefs": {
+                "sessionLengthMins": 25,
+                "breakLongMins": 15,
+                "preferredDifficulty": "medium",
+            },
+            "createdAt": now,
+            "updatedAt": now,
+        }
+        profiles_collection.insert_one(profile_data)
+
+    return render_template("profile.html", profile=profile_data)
