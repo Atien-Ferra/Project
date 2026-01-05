@@ -16,7 +16,6 @@
       <div class="d-flex gap-3">
         {% if current_user.is_authenticated %}
           <span class="navbar-link">Hello, {{ current_user.name }}</span>
-          <a class="nav-link" href="{{ url_for('auth.profile')}}">Profile</a>
           <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
         {% else %}
           <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
