@@ -2,8 +2,11 @@
 
 {% block title %}Profile{% endblock %}
 {% block nav_links %}
-    <a class="nav-link" href="{{ url_for('quiz.dashboard') }}">Dashboard</a>
+    <a class="nav-link active" href="{{ url_for('quiz.dashboard') }}">Dashboard</a>
+    <a class="nav-link" href="{{ url_for('quiz.quiz') }}">Quiz</a>
+    <a class="nav-link" href="{{ url_for('auth.logout') }}">Log Out</a>
 {% endblock %}
+
 {% block scripts %}
 <script src="{{ url_for('static', filename='JS/profile.js') }}"></script>
 {% endblock %}
