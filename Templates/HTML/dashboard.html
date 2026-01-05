@@ -39,7 +39,8 @@
         <div class="card-body">
             <h3 class="h6">Create a quiz from a document</h3>
             <p class="text-secondary small mb-3">Upload a PDF, DOCX, or TXT to generate a quiz.</p>
-            <form method="POST" enctype="multipart/form-data">
+            <form id="uploadForm" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="mb-3">
                     <label class="form-label">Upload document</label>
                     <input class="form-control" type="file" name="file" id="fileUpload" accept=".pdf,.docx,.txt">
