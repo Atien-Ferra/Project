@@ -10,12 +10,29 @@
     <h1 class="text-center">Profile</h1>
     <div class="card">
       <div class="card-body">
-        <p><strong>Name:</strong> {{ user_name }}</p>
-        <p><strong>Email:</strong> {{ user_email }}</p>
-        <p><strong>Streak:</strong> {{ streak }} days</p>
-        <p><strong>Quizzes Taken:</strong> {{ quizzes_taken }}</p>
-        <p><strong>Tasks Completed:</strong> {{ tasks_done }}</p>
-        <a href="{{ url_for('auth.updatepassword') }}" class="btn btn-primary">Update Password</a>
+        <form id="update-profile-form">
+          <div class="mb-3">
+            <label for="name" class="form-label"><strong>Name:</strong></label>
+            <input type="text" id="name" name="name" class="form-control" value="{{ profile.name }}" required>
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label"><strong>Email:</strong></label>
+            <input type="email" id="email" name="email" class="form-control" value="{{ profile.email }}" required>
+          </div>
+          <div class="mb-3">
+            <label for="streak" class="form-label"><strong>Streak:</strong></label>
+            <input type="number" id="streak" name="streak" class="form-control" value="{{ profile.streak }}" required>
+          </div>
+          <div class="mb-3">
+            <label for="quizzes_taken" class="form-label"><strong>Quizzes Taken:</strong></label>
+            <input type="number" id="quizzes_taken" name="quizzes_taken" class="form-control" value="{{ profile.quizzes_taken }}" required>
+          </div>
+          <div class="mb-3">
+            <label for="tasks_completed" class="form-label"><strong>Tasks Completed:</strong></label>
+            <input type="number" id="tasks_completed" name="tasks_completed" class="form-control" value="{{ profile.tasks_completed }}" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Update Profile</button>
+        </form>
       </div>
     </div>
   </div>
