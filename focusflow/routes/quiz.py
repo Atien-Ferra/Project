@@ -15,11 +15,23 @@ quiz_bp = Blueprint("quiz", __name__)
 def dashboard():
     db = get_db()
     users = db["users"]
+    notifications = db["notifications"]
+    tasks_collection = db["tasks"]
 
     user_doc = users.find_one({"_id": ObjectId(current_user.id)})
     if not user_doc:
         flash("User not found", "error")
         return redirect(url_for("auth.login"))
+
+    # Fetch notifications for the user
+    user_notifications = list(notifications.find({"userId": ObjectId(current_user.id)}).sort("sentAt", -1))
+    for notification in user_notifications:
+        notification["_id"] = str(notification["_id"])  # Convert ObjectId to string for JSON serialization
+
+    # Fetch tasks for the user
+    user_tasks = list(tasks_collection.find({"user_id": ObjectId(current_user.id)}).sort("created_at", -1))
+    for task in user_tasks:
+        task["_id"] = str(task["_id"])  # Convert ObjectId to string for JSON serialization
 
     if request.method == "POST" and "file" in request.files:
         file = request.files["file"]
@@ -72,7 +84,8 @@ def dashboard():
         streak=user_doc.get("streak", 0),
         quizzes_taken=user_doc.get("quizzes_taken", 0),
         tasks_done=user_doc.get("tasks_done", 0),
-        tasks=[]  # Tasks will be fetched client-side via API
+        tasks=user_tasks,  # Pass tasks to the template
+        notifications=user_notifications  # Pass notifications to the template
     )
 
 @quiz_bp.route("/tasks/add", methods=["POST"])
@@ -223,15 +236,18 @@ def get_tasks():
     """Get all tasks for the current user."""
     db = get_db()
     tasks_collection = db["tasks"]
-    
+
+    # Fetch tasks for the current user
     tasks = list(tasks_collection.find(
         {"user_id": ObjectId(current_user.id)}
     ).sort("created_at", -1))
-    
-    # Convert ObjectId to string for JSON serialization
+
+    # Convert ObjectId and datetime fields to strings for JSON serialization
     for task in tasks:
         task["_id"] = str(task["_id"])
-    
+        task["user_id"] = str(task["user_id"])
+        task["created_at"] = task["created_at"].isoformat()
+
     return jsonify({"success": True, "tasks": tasks}), 200
 
 
@@ -290,33 +306,70 @@ def toggle_task(task_id):
     """Toggle the completion status of a task."""
     db = get_db()
     tasks_collection = db["tasks"]
-    
+    users_collection = db["users"]
+
     try:
-        # First, get the current task to toggle its done status
+        # Fetch the current task
         task = tasks_collection.find_one({
             "_id": ObjectId(task_id),
             "user_id": ObjectId(current_user.id)
         })
-        
+
         if not task:
             return jsonify({"success": False, "error": "Task not found"}), 404
-        
+
         new_done_status = not task.get("done", False)
-        
+
+        # Update the task's done status
         result = tasks_collection.update_one(
-            {
-                "_id": ObjectId(task_id),
-                "user_id": ObjectId(current_user.id)
-            },
+            {"_id": ObjectId(task_id), "user_id": ObjectId(current_user.id)},
             {"$set": {"done": new_done_status}}
         )
-        
+
         if result.modified_count > 0:
-            return jsonify({
-                "success": True,
-                "done": new_done_status
-            }), 200
+            # Check if all tasks are completed
+            all_tasks_done = tasks_collection.count_documents({
+                "user_id": ObjectId(current_user.id),
+                "done": False
+            }) == 0
+
+            if all_tasks_done:
+                # Check if the streak has already been incremented today
+                today = datetime.now().date()
+                user = users_collection.find_one({"_id": ObjectId(current_user.id)})
+                last_streak_update = user.get("last_streak_update")
+
+                if not last_streak_update or last_streak_update.date() < today:
+                    # Increment streak and update the last streak update date
+                    users_collection.update_one(
+                        {"_id": ObjectId(current_user.id)},
+                        {
+                            "$inc": {"streak": 1},
+                            "$set": {"last_streak_update": datetime.now()}
+                        }
+                    )
+            return jsonify({"success": True, "done": new_done_status}), 200
         else:
             return jsonify({"success": False, "error": "Failed to update task"}), 500
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
+
+@quiz_bp.route("/api/notifications/dismiss/<notification_id>", methods=["PATCH"])
+@login_required
+def dismiss_notification(notification_id):
+    """Dismiss a notification."""
+    db = get_db()
+    notifications = db["notifications"]
+
+    try:
+        result = notifications.update_one(
+            {"_id": ObjectId(notification_id), "userId": ObjectId(current_user.id)},
+            {"$set": {"status": "dismissed"}}
+        )
+        if result.modified_count > 0:
+            return jsonify({"success": True}), 200
+        else:
+            return jsonify({"success": False, "error": "Notification not found"}), 404
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
