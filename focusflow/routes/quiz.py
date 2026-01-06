@@ -5,8 +5,10 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from bson.objectid import ObjectId
 from db import get_db
+from focusflow.services.notifications import create_notification
 from ..services.files import allowed_file, extract_text_from_file
 from ..services.questions import generate_questions_from_text_lmstudio
+import logging
 
 quiz_bp = Blueprint("quiz", __name__)
 
@@ -23,13 +25,22 @@ def dashboard():
         flash("User not found", "error")
         return redirect(url_for("auth.login"))
 
-    # Fetch notifications for the user
-    user_notifications = list(notifications.find({"userId": ObjectId(current_user.id)}).sort("sentAt", -1))
+    # IMPORTANT: exclude dismissed
+    user_notifications = list(
+        notifications
+        .find({
+            "userId": ObjectId(current_user.id),
+            "status": {"$ne": "dismissed"},
+        })
+        .sort("sentAt", -1)
+    )
     for notification in user_notifications:
-        notification["_id"] = str(notification["_id"])  # Convert ObjectId to string for JSON serialization
+        notification["_id"] = str(notification["_id"])
 
-    # Fetch tasks for the user
-    user_tasks = list(tasks_collection.find({"user_id": ObjectId(current_user.id)}).sort("created_at", -1))
+    # Fetch tasks...
+    user_tasks = list(tasks_collection.find(
+        {"user_id": ObjectId(current_user.id)}
+    ).sort("created_at", -1))
     for task in user_tasks:
         task["_id"] = str(task["_id"])  # Convert ObjectId to string for JSON serialization
 
@@ -84,8 +95,8 @@ def dashboard():
         streak=user_doc.get("streak", 0),
         quizzes_taken=user_doc.get("quizzes_taken", 0),
         tasks_done=user_doc.get("tasks_done", 0),
-        tasks=user_tasks,  # Pass tasks to the template
-        notifications=user_notifications  # Pass notifications to the template
+        tasks=user_tasks,
+        notifications=user_notifications
     )
 
 @quiz_bp.route("/tasks/add", methods=["POST"])
@@ -97,12 +108,26 @@ def add_task():
         return redirect(url_for("quiz.dashboard"))
 
     db = get_db()
-    db["tasks"].insert_one({
+    tasks_collection = db["tasks"]
+
+    result = tasks_collection.insert_one({
         "user_id": ObjectId(current_user.id),
         "title": title,
         "done": False,
         "created_at": datetime.now(),
     })
+
+    # Create a notification that a new task needs to be done
+    create_notification(
+        db=db,
+        user_id=current_user.id,
+        notification_type="task_due",
+        payload={
+            "taskId": str(result.inserted_id),
+            "title": title,
+            "done": False,
+        },
+    )
 
     flash("Task added.", "success")
     return redirect(url_for("quiz.dashboard"))
@@ -327,6 +352,18 @@ def toggle_task(task_id):
         )
 
         if result.modified_count > 0:
+            # Create a notification reflecting the new status
+            create_notification(
+                db=db,
+                user_id=current_user.id,
+                notification_type="task_due",
+                payload={
+                    "taskId": str(task["_id"]),
+                    "title": task.get("title", ""),
+                    "done": new_done_status,
+                },
+            )
+
             # Check if all tasks are completed
             all_tasks_done = tasks_collection.count_documents({
                 "user_id": ObjectId(current_user.id),
@@ -353,23 +390,78 @@ def toggle_task(task_id):
             return jsonify({"success": False, "error": "Failed to update task"}), 500
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
+    
+
+@quiz_bp.route("/api/notifications", methods=["GET"])
+@login_required
+def get_notifications():
+    """Return active (non-dismissed) notifications for the current user."""
+    db = get_db()
+    notifications = db["notifications"]
+
+    try:
+        user_oid = ObjectId(current_user.id)
+    except Exception:
+        return jsonify({"success": False, "error": "Invalid current user id"}), 400
+
+    docs = list(
+        notifications
+        .find({
+            "userId": user_oid,
+            "status": {"$ne": "dismissed"},
+        })
+        .sort("sentAt", -1)
+    )
+
+    result = []
+    for n in docs:
+        result.append({
+            "_id": str(n["_id"]),
+            "type": n.get("type"),
+            "status": n.get("status"),
+            "payload": n.get("payload") or {},
+        })
+
+    return jsonify({"success": True, "notifications": result}), 200
 
 
 @quiz_bp.route("/api/notifications/dismiss/<notification_id>", methods=["PATCH"])
 @login_required
 def dismiss_notification(notification_id):
-    """Dismiss a notification."""
     db = get_db()
     notifications = db["notifications"]
 
     try:
+        notif_oid = ObjectId(notification_id)
+        user_oid = ObjectId(current_user.id)
+    except Exception:
+        # Always 200; indicate failure in JSON only
+        return jsonify({
+            "success": False,
+            "error": "Invalid id"
+        }), 200
+
+    try:
         result = notifications.update_one(
-            {"_id": ObjectId(notification_id), "userId": ObjectId(current_user.id)},
+            {
+                "_id": notif_oid,
+                "userId": user_oid,
+                "status": {"$ne": "dismissed"},
+            },
             {"$set": {"status": "dismissed"}}
         )
+
         if result.modified_count > 0:
             return jsonify({"success": True}), 200
         else:
-            return jsonify({"success": False, "error": "Notification not found"}), 404
+            # Not found or already dismissed
+            return jsonify({
+                "success": False,
+                "error": "Not found or already dismissed"
+            }), 200
+
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 400
+        return jsonify({
+            "success": False,
+            "error": f"Server error: {str(e)}"
+        }), 200
