@@ -7,8 +7,9 @@ def create_notification(db, user_id, notification_type, payload):
     notification = {
         "userId": ObjectId(user_id),
         "type": notification_type,
+        "scheduledFor": None,          # you can set a real datetime later
         "sentAt": datetime.now(),
-        "status": "scheduled",
+        "status": "sent",              # or "scheduled" if you treat it differently
         "payload": payload,
     }
     notifications.insert_one(notification)

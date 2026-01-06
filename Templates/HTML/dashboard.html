@@ -17,18 +17,26 @@
             {% for notification in notifications %}
             <li>
                 {% if notification.type == "task_due" %}
-                Task due: {{ notification.payload.taskId }}
+                    {% if notification.payload.done %}
+                        Task "{{ notification.payload.title }}" is done.
+                    {% else %}
+                        Task "{{ notification.payload.title }}" still needs to be done.
+                    {% endif %}
                 {% elif notification.type == "daily_checkin" %}
-                Don't forget your daily check-in!
+                    Don't forget your daily check-in!
                 {% elif notification.type == "streak_warning" %}
-                Warning: Your streak is at risk!
+                    Warning: Your streak is at risk!
                 {% endif %}
-                <button type="button" class="btn-close dismiss-notification" data-notification-id="{{ notification._id }}" aria-label="Close"></button>
+                <button type="button"
+                        class="btn-close dismiss-notification"
+                        data-notification-id="{{ notification._id }}"
+                        aria-label="Close"></button>
             </li>
             {% endfor %}
         </ul>
     </div>
     {% endif %}
+
 
     <div class="card streak border-0 shadow-sm mb-3">
         <div class="card-body d-flex align-items-center justify-content-between">
@@ -139,21 +147,4 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='JS/dashboard.js') }}"></script>
-<script>
-$(document).ready(function() {
-    $(".dismiss-notification").on("click", function() {
-        const notificationId = $(this).data("notification-id");
-        $.ajax({
-            url: `/api/notifications/dismiss/${notificationId}`,
-            method: "PATCH",
-            success: function() {
-                location.reload();
-            },
-            error: function() {
-                alert("Failed to dismiss notification.");
-            }
-        });
-    });
-});
-</script>
 {% endblock %}

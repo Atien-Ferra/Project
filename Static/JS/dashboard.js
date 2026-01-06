@@ -137,6 +137,9 @@ $(document).ready(function() {
                 });
                 $('.empty-state').hide();
                 updateProgress();
+    
+                // NEW: refresh notifications
+                fetchAndRenderNotifications();
             } else {
                 alert('Error adding task: ' + data.error);
             }
@@ -164,6 +167,9 @@ $(document).ready(function() {
                 if ($('.task-item').length === 0) {
                     $('.empty-state').show();
                 }
+    
+                // NEW: refresh notifications
+                fetchAndRenderNotifications();
             } else {
                 alert('Error deleting task: ' + data.error);
             }
@@ -172,28 +178,31 @@ $(document).ready(function() {
     }
 
     // Toggle task completion via API
-    function toggleTask(taskId) {
-        const csrfToken = document.getElementById('csrfToken').value;
-        fetch(`/api/tasks/${taskId}/toggle`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
+   function toggleTask(taskId) {
+    const csrfToken = document.getElementById('csrfToken').value;
+    fetch(`/api/tasks/${taskId}/toggle`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            $(`#check-${taskId}`).prop('checked', data.done);
+            if ($('.task-checkbox:checked').length === $('.task-item').length) {
+                updateStreak();
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                $(`#check-${taskId}`).prop('checked', data.done);
-                if ($('.task-checkbox:checked').length === $('.task-item').length) {
-                    updateStreak();
-                }
-            } else {
-                alert('Error updating task: ' + data.error);
-            }
-        })
-        .catch(error => console.error('Error updating task:', error));
-    }
+
+            // NEW: refresh notifications
+            fetchAndRenderNotifications();
+        } else {
+            alert('Error updating task: ' + data.error);
+        }
+    })
+    .catch(error => console.error('Error updating task:', error));
+}
 
     function updateProgress() {
         const totalTasks = $('.task-item').length;
@@ -236,4 +245,153 @@ $(document).ready(function() {
         $('.empty-state').show();
         $('.tasks-section').hide();
     }
+});
+
+/**
+ * Render the notification bar from an array of notifications.
+ * @param {Array} notifications
+ */
+function renderNotifications(notifications) {
+    // Remove any existing alert
+    const existingAlert = document.querySelector('.alert.alert-info[data-notification-bar="1"]');
+    if (existingAlert) {
+        existingAlert.remove();
+    }
+
+    if (!notifications || notifications.length === 0) {
+        return; // nothing to render
+    }
+
+    // Build HTML for the notification bar
+    const wrapper = document.querySelector('.py-4');
+    if (!wrapper) return;
+
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-info alert-dismissible fade show';
+    alertDiv.setAttribute('role', 'alert');
+    alertDiv.setAttribute('data-notification-bar', '1');
+
+    const ul = document.createElement('ul');
+    ul.className = 'mb-0';
+
+    notifications.forEach(n => {
+        const li = document.createElement('li');
+
+        let text = '';
+        if (n.type === 'task_due') {
+            const payload = n.payload || {};
+            const title = payload.title || 'Task';
+            const done = !!payload.done;
+            if (done) {
+                text = `Task "${title}" is done.`;
+            } else {
+                text = `Task "${title}" still needs to be done.`;
+            }
+        } else if (n.type === 'daily_checkin') {
+            text = "Don't forget your daily check-in!";
+        } else if (n.type === 'streak_warning') {
+            text = "Warning: Your streak is at risk!";
+        } else {
+            text = 'You have a notification.'; // fallback
+        }
+
+        li.appendChild(document.createTextNode(text + ' '));
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-close dismiss-notification';
+        btn.setAttribute('aria-label', 'Close');
+        btn.dataset.notificationId = n._id;
+
+        li.appendChild(btn);
+        ul.appendChild(li);
+    });
+
+    alertDiv.appendChild(ul);
+
+    // Insert alert at the top of .py-4, before other content
+    wrapper.insertBefore(alertDiv, wrapper.firstChild);
+}
+
+/**
+ * Fetch notifications from the backend and render them.
+ */
+function fetchAndRenderNotifications() {
+    fetch('/api/notifications')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderNotifications(data.notifications || []);
+            } else {
+                console.warn('Failed to fetch notifications:', data.error);
+            }
+        })
+        .catch(err => {
+            console.error('Error fetching notifications:', err);
+        });
+}
+
+const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+const csrfHeaderToken = csrfMeta ? csrfMeta.content : null;
+
+$(document).on("click", ".dismiss-notification", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const $btn = $(this);
+
+    if ($btn.data("dismissing")) {
+        return;
+    }
+    $btn.data("dismissing", true);
+
+    const notificationId = $btn.data("notification-id");
+    const csrfToken = csrfHeaderToken || document.getElementById('csrfToken')?.value || '';
+
+    const $li = $btn.closest("li");
+    const $alert = $btn.closest(".alert.alert-info");
+
+    console.log("Dismissing notification", notificationId);
+
+    // Optimistically remove this notification row
+    if ($li.length) {
+        $li.remove();
+    }
+
+    // If no more notifications, remove the whole alert box
+    if ($alert.length && $alert.find("li").length === 0) {
+        $alert.remove();
+    }
+
+    fetch(`/api/notifications/dismiss/${notificationId}`, {
+        method: 'PATCH',
+        headers: {
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(async (res) => {
+        if (!res.ok) {
+            // Log, but do NOT show any alert
+            console.warn(
+                "Non-2xx response when dismissing notification",
+                notificationId,
+                "status:", res.status
+            );
+            try {
+                const data = await res.json();
+                console.warn("Dismiss error body:", data);
+            } catch (e) {
+                console.warn("Could not parse dismiss error JSON");
+            }
+        } else {
+            console.log("Dismiss success", notificationId);
+        }
+    })
+    .catch(err => {
+        // Also just log, no alert
+        console.error('Dismiss error:', err);
+    })
+    .finally(() => {
+        $btn.data("dismissing", false);
+    });
 });
