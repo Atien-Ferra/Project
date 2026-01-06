@@ -8,6 +8,7 @@ from db import get_db
 from focusflow.services.notifications import create_notification
 from ..services.files import allowed_file, extract_text_from_file
 from ..services.questions import generate_questions_from_text_lmstudio
+from ..services.streaks import record_streak_event, calculate_current_streak
 import logging
 
 quiz_bp = Blueprint("quiz", __name__)
@@ -334,60 +335,60 @@ def toggle_task(task_id):
     users_collection = db["users"]
 
     try:
+        user_oid = ObjectId(current_user.id)
+        task_oid = ObjectId(task_id)
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Invalid id: {e}"}), 400
+
+    try:
         # Fetch the current task
         task = tasks_collection.find_one({
-            "_id": ObjectId(task_id),
-            "user_id": ObjectId(current_user.id)
+            "_id": task_oid,
+            "user_id": user_oid
         })
 
         if not task:
             return jsonify({"success": False, "error": "Task not found"}), 404
 
-        new_done_status = not task.get("done", False)
+        old_done_status = task.get("done", False)
+        new_done_status = not old_done_status
 
         # Update the task's done status
         result = tasks_collection.update_one(
-            {"_id": ObjectId(task_id), "user_id": ObjectId(current_user.id)},
+            {"_id": task_oid, "user_id": user_oid},
             {"$set": {"done": new_done_status}}
         )
 
-        if result.modified_count > 0:
-            # Create a notification reflecting the new status
-            create_notification(
-                db=db,
-                user_id=current_user.id,
-                notification_type="task_due",
-                payload={
-                    "taskId": str(task["_id"]),
-                    "title": task.get("title", ""),
-                    "done": new_done_status,
-                },
-            )
-
-            # Check if all tasks are completed
-            all_tasks_done = tasks_collection.count_documents({
-                "user_id": ObjectId(current_user.id),
-                "done": False
-            }) == 0
-
-            if all_tasks_done:
-                # Check if the streak has already been incremented today
-                today = datetime.now().date()
-                user = users_collection.find_one({"_id": ObjectId(current_user.id)})
-                last_streak_update = user.get("last_streak_update")
-
-                if not last_streak_update or last_streak_update.date() < today:
-                    # Increment streak and update the last streak update date
-                    users_collection.update_one(
-                        {"_id": ObjectId(current_user.id)},
-                        {
-                            "$inc": {"streak": 1},
-                            "$set": {"last_streak_update": datetime.now()}
-                        }
-                    )
-            return jsonify({"success": True, "done": new_done_status}), 200
-        else:
+        if result.modified_count <= 0:
             return jsonify({"success": False, "error": "Failed to update task"}), 500
+
+        # Create a notification reflecting the new status
+        create_notification(
+            db=db,
+            user_id=current_user.id,
+            notification_type="task_due",
+            payload={
+                "taskId": str(task["_id"]),
+                "title": task.get("title", ""),
+                "done": new_done_status,
+            },
+        )
+
+        # Only when we go from not done -> done do we record a streak event
+        if not old_done_status and new_done_status:
+            record_streak_event("task", {"taskId": str(task_oid)})
+
+        # Recalculate streak from streakEvents
+        streak = calculate_current_streak(current_user.id)
+
+        # Persist on user document (optional, but keeps dashboard fast)
+        users_collection.update_one(
+            {"_id": user_oid},
+            {"$set": {"streak": streak}}
+        )
+
+        return jsonify({"success": True, "done": new_done_status, "streak": streak}), 200
+
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 400
     
