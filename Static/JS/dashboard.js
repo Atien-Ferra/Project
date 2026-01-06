@@ -45,6 +45,7 @@ $(document).ready(function() {
     }
 
     // Open modal button
+    $('#openTaskModal').text('Add a Task');
     $('#openTaskModal').on('click', openModal);
 
     // Close modal buttons
@@ -184,6 +185,9 @@ $(document).ready(function() {
         .then(data => {
             if (data.success) {
                 $(`#check-${taskId}`).prop('checked', data.done);
+                if ($('.task-checkbox:checked').length === $('.task-item').length) {
+                    updateStreak();
+                }
             } else {
                 alert('Error updating task: ' + data.error);
             }
