@@ -1,68 +1,129 @@
 {% extends "base.html" %}
 
-{% block title %}Profile{% endblock %}
-{% block nav_links %}
-    <a class="nav-link active" href="{{ url_for('quiz.dashboard') }}">Dashboard</a>
-    <a class="nav-link" href="{{ url_for('quiz.quiz') }}">Quiz</a>
-    <a class="nav-link" href="{{ url_for('auth.logout') }}">Log Out</a>
+{% block title %}Profile • Focus Flow{% endblock %}
+
+{% block content %}
+<div class="py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Profile Header -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body text-center py-5">
+                    <div class="avatar mx-auto mb-3">
+                        {{ profile.displayName[0]|upper if profile.displayName else 'U' }}
+                    </div>
+                    <h3 class="fw-bold mb-1">{{ profile.displayName }}</h3>
+                    <p class="text-muted mb-3">{{ profile.email }}</p>
+                    <div class="d-flex justify-content-center gap-4">
+                        <div class="text-center">
+                            <div class="h4 mb-0 fw-bold text-primary">{{ profile.streak }}</div>
+                            <small class="text-muted">Day Streak</small>
+                        </div>
+                        <div class="text-center">
+                            <div class="h4 mb-0 fw-bold text-success">{{ profile.tasks_done }}</div>
+                            <small class="text-muted">Tasks Done</small>
+                        </div>
+                        <div class="text-center">
+                            <div class="h4 mb-0 fw-bold text-info">{{ profile.quizzes_taken }}</div>
+                            <small class="text-muted">Quizzes</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Study Preferences -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>Study Preferences
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="update-profile-form" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-clock me-1"></i> Session Length
+                                </label>
+                                <p id="sessionLengthText" class="form-control-plaintext">
+                                    {{ profile.studyPrefs.sessionLengthMins }} minutes
+                                </p>
+                                <input type="number" id="sessionLengthInput" name="studyPrefs.sessionLengthMins" 
+                                       class="form-control d-none" value="{{ profile.studyPrefs.sessionLengthMins }}" 
+                                       min="5" max="120" required>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-cup-hot me-1"></i> Break Length
+                                </label>
+                                <p id="breakLengthText" class="form-control-plaintext">
+                                    {{ profile.studyPrefs.breakLongMins }} minutes
+                                </p>
+                                <input type="number" id="breakLengthInput" name="studyPrefs.breakLongMins" 
+                                       class="form-control d-none" value="{{ profile.studyPrefs.breakLongMins }}" 
+                                       min="1" max="60" required>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-speedometer me-1"></i> Difficulty
+                                </label>
+                                <p id="preferredDifficultyText" class="form-control-plaintext text-capitalize">
+                                    {{ profile.studyPrefs.preferredDifficulty }}
+                                </p>
+                                <select id="preferredDifficultyInput" name="studyPrefs.preferredDifficulty" 
+                                        class="form-select d-none" required>
+                                    <option value="easy" {% if profile.studyPrefs.preferredDifficulty == 'easy' %}selected{% endif %}>Easy</option>
+                                    <option value="medium" {% if profile.studyPrefs.preferredDifficulty == 'medium' %}selected{% endif %}>Medium</option>
+                                    <option value="hard" {% if profile.studyPrefs.preferredDifficulty == 'hard' %}selected{% endif %}>Hard</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex gap-2">
+                            <button type="button" id="editButton" class="btn btn-outline-primary">
+                                <i class="bi bi-pencil me-1"></i> Edit Preferences
+                            </button>
+                            <button type="submit" id="saveButton" class="btn btn-primary d-none">
+                                <i class="bi bi-check-lg me-1"></i> Save Changes
+                            </button>
+                            <button type="button" id="cancelButton" class="btn btn-outline-secondary d-none">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Account Actions -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-shield-lock me-2"></i>Account Security
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">Password</h6>
+                            <p class="text-muted mb-0 small">Last changed: Never</p>
+                        </div>
+                        <a href="{{ url_for('auth.updatepassword') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-key me-1"></i> Change Password
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='JS/profile.js') }}"></script>
-{% endblock %}
-{% block content %}
-<div class="row justify-content-center mt-5">
-  <div class="col-md-8">
-    <h1 class="text-center">Profile</h1>
-    <div class="card">
-      <div class="card-body">
-        <form id="update-profile-form" method="POST">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="mb-3">
-            <label class="form-label"><strong>Name:</strong></label>
-            <p>{{ profile.displayName }}</p>
-          </div>
-          <div class="mb-3">
-            <label class="form-label"><strong>Email:</strong></label>
-            <p>{{ profile.email }}</p>
-          </div>
-          <div class="mb-3">
-            <label class="form-label"><strong>Streak:</strong></label>
-            <p>{{ profile.streak }}</p>
-          </div>
-          <div class="mb-3">
-            <label class="form-label"><strong>Quizzes Taken:</strong></label>
-            <p>{{ profile.quizzes_taken }}</p>
-          </div>
-          <div class="mb-3">
-            <label class="form-label"><strong>Tasks Completed:</strong></label>
-            <p>{{ profile.tasks_done }}</p>
-          </div>
-          <div class="mb-3">
-            <label class="form-label"><strong>Session Length (mins):</strong></label>
-            <p id="sessionLengthText">{{ profile.studyPrefs.sessionLengthMins }}</p>
-            <input type="number" id="sessionLengthInput" name="studyPrefs.sessionLengthMins" class="form-control d-none" value="{{ profile.studyPrefs.sessionLengthMins }}" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label"><strong>Break Length (mins):</strong></label>
-            <p id="breakLengthText">{{ profile.studyPrefs.breakLongMins }}</p>
-            <input type="number" id="breakLengthInput" name="studyPrefs.breakLongMins" class="form-control d-none" value="{{ profile.studyPrefs.breakLongMins }}" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label"><strong>Preferred Difficulty:</strong></label>
-            <p id="preferredDifficultyText">{{ profile.studyPrefs.preferredDifficulty }}</p>
-            <select id="preferredDifficultyInput" name="studyPrefs.preferredDifficulty" class="form-control d-none" required>
-              <option value="easy" {% if profile.studyPrefs.preferredDifficulty == 'easy' %}selected{% endif %}>Easy</option>
-              <option value="medium" {% if profile.studyPrefs.preferredDifficulty == 'medium' %}selected{% endif %}>Medium</option>
-              <option value="hard" {% if profile.studyPrefs.preferredDifficulty == 'hard' %}selected{% endif %}>Hard</option>
-            </select>
-          </div>
-          <button type="button" id="editButton" class="btn btn-secondary">Edit</button>
-          <button type="submit" id="saveButton" class="btn btn-primary d-none">Save Changes</button>
-          <button type="button" id="cancelButton" class="btn btn-danger d-none">Cancel</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
 {% endblock %}
