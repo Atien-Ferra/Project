@@ -1,18 +1,103 @@
 {% extends "base.html" %}
 
-{% block title %}Home{% endblock %}
-{% block scripts %}
-<script src="{{ url_for('static', filename='JS/index.js') }}"></script>
-{% endblock %}
+{% block title %}Focus Flow - Stay Focused, Stay Productive{% endblock %}
+
 {% block content %}
-<div class="text-center mt-5">
-  <h1>Welcome to Focus Flow</h1>
-  <p>Your productivity companion for quizzes, tasks, and more!</p>
-  {% if 'user' in session %}
-    <a href="{{ quiz.url_for('quiz.dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
-  {% else %}
-    <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login</a>
-    <a href="{{ url_for('auth.signup') }}" class="btn btn-secondary">Sign Up</a>
-  {% endif %}
+<!-- Hero Section -->
+<div class="hero text-center text-white py-5 my-4 rounded-4">
+    <div class="container py-5">
+        <h1 class="display-4 fw-bold mb-3">
+            <i class="bi bi-lightning-charge-fill"></i> Focus Flow
+        </h1>
+        <p class="lead mb-4 opacity-90">
+            Transform your study habits with AI-powered quizzes, task tracking, and streak motivation.
+        </p>
+        {% if not current_user.is_authenticated %}
+        <div class="d-flex gap-3 justify-content-center">
+            <a href="{{ url_for('auth.signup') }}" class="btn btn-light btn-lg px-4">
+                <i class="bi bi-rocket-takeoff me-2"></i>Get Started Free
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg px-4">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+            </a>
+        </div>
+        {% else %}
+        <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-light btn-lg px-5">
+            <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard
+        </a>
+        {% endif %}
+    </div>
 </div>
+
+<!-- Features Section -->
+<div class="py-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">Why Focus Flow?</h2>
+        <p class="text-muted">Everything you need to boost your productivity</p>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm text-center p-4">
+                <div class="display-3 mb-3">📝</div>
+                <h4 class="fw-bold">AI-Powered Quizzes</h4>
+                <p class="text-muted mb-0">
+                    Upload any document and instantly generate customized quizzes to test your knowledge.
+                </p>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm text-center p-4">
+                <div class="display-3 mb-3">✅</div>
+                <h4 class="fw-bold">Task Management</h4>
+                <p class="text-muted mb-0">
+                    Keep track of your tasks and watch your productivity soar with our intuitive task system.
+                </p>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm text-center p-4">
+                <div class="display-3 mb-3">🔥</div>
+                <h4 class="fw-bold">Streak Motivation</h4>
+                <p class="text-muted mb-0">
+                    Build consistency with daily streaks and unlock rewards as you progress.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="bg-dark text-white rounded-4 p-5 my-5">
+    <div class="row text-center g-4">
+        <div class="col-md-4">
+            <div class="display-4 fw-bold">🏆</div>
+            <h3 class="fw-bold mb-0">Earn Rewards</h3>
+            <p class="opacity-75 mb-0">Complete tasks and quizzes to earn badges</p>
+        </div>
+        <div class="col-md-4">
+            <div class="display-4 fw-bold">📊</div>
+            <h3 class="fw-bold mb-0">Track Progress</h3>
+            <p class="opacity-75 mb-0">Monitor your learning journey with detailed stats</p>
+        </div>
+        <div class="col-md-4">
+            <div class="display-4 fw-bold">🎯</div>
+            <h3 class="fw-bold mb-0">Stay Focused</h3>
+            <p class="opacity-75 mb-0">Build productive habits that last</p>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+{% if not current_user.is_authenticated %}
+<div class="text-center py-5">
+    <h2 class="fw-bold mb-3">Ready to boost your productivity?</h2>
+    <p class="text-muted mb-4">Join thousands of students and professionals using Focus Flow.</p>
+    <a href="{{ url_for('auth.signup') }}" class="btn btn-primary btn-lg px-5">
+        <i class="bi bi-arrow-right-circle me-2"></i>Start for Free
+    </a>
+</div>
+{% endif %}
 {% endblock %}
