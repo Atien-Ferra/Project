@@ -1,0 +1,41 @@
+/* Quiz Application Styles */
+
+.q-card {
+    border-left: 4px solid var(--ff-primary);
+    border-radius: 0.5rem;
+}
+
+.answer-option {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 2px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    background: white;
+}
+
+.answer-option:hover {
+    border-color: var(--ff-primary);
+    background-color: #f0f0ff;
+    transform: translateX(4px);
+}
+
+.answer-option.selected {
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    border-color: var(--ff-primary);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+}
+
+.question-card {
+    display: none;
+}
+
+.question-card.active {
+    display: block;
+}
+
+.quiz-progress {
+    height: 6px;
+    border-radius: 3px;
+}

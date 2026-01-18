@@ -1,0 +1,14 @@
+/* Authentication Styles */
+
+.auth-card {
+    max-width: 480px;
+    border-radius: 1rem;
+    margin: 2rem auto;
+}
+
+/* Hero Section (Landing Page) */
+.hero {
+    padding: 6rem 0;
+    background: var(--ff-gradient);
+    color: white;
+}

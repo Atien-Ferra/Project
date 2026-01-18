@@ -1,0 +1,107 @@
+/* Dashboard Module Styles */
+
+/* Streak Card */
+.streak {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-left: 4px solid var(--ff-warning);
+}
+
+.streak:hover {
+    animation: pulse 0.5s ease;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Progress Bars */
+.progress {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar-gradient {
+    background: #000000 !important;
+}
+
+/* Task Items */
+.task-item {
+    transition: all 0.3s ease;
+    border-radius: 0.75rem !important;
+    border: 1px solid #e2e8f0;
+}
+
+.task-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--ff-primary);
+}
+
+.task-item.task-completed {
+    background: #f0fdf4;
+    border-color: var(--ff-success);
+}
+
+.task-checkbox:checked+label {
+    text-decoration: line-through;
+    color: #64748b;
+}
+
+/* Focus Session Card (Timer) */
+.focus-card {
+    background: #0f172a !important;
+    border-radius: 1.5rem !important;
+    position: relative;
+    z-index: 1;
+}
+
+.timer-number {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    letter-spacing: -2px;
+}
+
+.pulse-animation {
+    animation: glow-pulse 2s infinite;
+}
+
+@keyframes glow-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 15px rgba(255, 255, 255, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+    }
+}
+
+.focus-mode-btn.active {
+    background-color: white !important;
+    color: #0f172a !important;
+    font-weight: 600;
+}
+
+/* Toasts and Modals */
+.toast-container .toast {
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.dismiss-notification {
+    opacity: 0.5;
+}
+
+.dismiss-notification:hover {
+    opacity: 1;
+}

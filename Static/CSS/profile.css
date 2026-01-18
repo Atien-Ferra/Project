@@ -1,0 +1,15 @@
+/* Profile Page Styles */
+
+.avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 2rem;
+    color: var(--ff-primary);
+    margin: 0 auto 1.5rem;
+}

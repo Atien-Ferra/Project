@@ -1,0 +1,106 @@
+/* Base Styles for Focus Flow */
+
+:root {
+    --ff-success: #10b981;
+    --ff-warning: #f59e0b;
+    --ff-danger: #ef4444;
+    --ff-primary: #1e293b;
+    --ff-light: #f8fafc;
+    --ff-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+body {
+    background: var(--ff-light);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* Brand */
+.brand {
+    font-weight: 700;
+    background: var(--ff-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    border-bottom: 1px solid #e2e8f0;
+    background: white;
+    border-radius: 1rem 1rem 0 0 !important;
+}
+
+/* Buttons */
+.btn-primary {
+    background: var(--ff-gradient);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+
+/* Forms */
+.form-check-input:checked {
+    background-color: var(--ff-primary);
+    border-color: var(--ff-primary);
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.25);
+    border-color: var(--ff-primary);
+}
+
+.form-control:focus {
+    border-color: var(--ff-primary);
+    box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.25);
+}
+
+/* Alerts & Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Loading State */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #e2e8f0;
+    border-top-color: var(--ff-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
