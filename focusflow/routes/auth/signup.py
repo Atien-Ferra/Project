@@ -6,7 +6,7 @@ from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_user
 from werkzeug.security import generate_password_hash
 from db import get_db
-from . import auth_bp, PEPPER
+from . import auth_bp, get_pepper
 from .user import User
 
 
@@ -17,7 +17,7 @@ def signup():
         name = request.form.get("name")
         email = request.form.get("email")
         password = request.form.get("password")
-        password_with_pepper = password + PEPPER
+        password_with_pepper = password + get_pepper()
         confirm_password = request.form.get("confirm_password")
         terms = request.form.get("terms")
 

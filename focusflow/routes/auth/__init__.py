@@ -10,9 +10,16 @@ from flask_limiter.util import get_remote_address
 auth_bp = Blueprint("auth", __name__)
 limiter = Limiter(get_remote_address)
 
-PEPPER = os.getenv("PASSWORD_PEPPER")
-if not PEPPER:
-    raise RuntimeError("PASSWORD_PEPPER not set")
+# Lazy loading of PEPPER to avoid checking before dotenv is loaded
+_PEPPER = None
+
+def get_pepper():
+    global _PEPPER
+    if _PEPPER is None:
+        _PEPPER = os.getenv("PASSWORD_PEPPER")
+        if not _PEPPER:
+            raise RuntimeError("PASSWORD_PEPPER not set")
+    return _PEPPER
 
 # Import routes after blueprint is created to avoid circular imports
 from .user import load_user
