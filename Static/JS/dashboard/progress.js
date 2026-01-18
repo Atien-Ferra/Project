@@ -16,8 +16,8 @@ function updateProgress() {
     // Calculate percentage (avoid division by zero)
     const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
-    // Update progress bar width
-    $('.progress-bar').css('width', progress + '%').attr('aria-valuenow', progress);
+    // Update progress bar width - use specific ID to avoid affecting timer progress bar
+    $('#taskProgressBar').css('width', progress + '%').attr('aria-valuenow', progress);
 
     // Update percentage text
     $('.progress-percent').text(Math.round(progress) + '%');
