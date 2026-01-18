@@ -52,7 +52,7 @@ A bird's-eye view of your productivity:
 
 | Contributor | Roles & Responsibilities |
 |-------------|--------------------------|
-| **Atien / Freakli** | Full-Stack Development, Database Architecture, AI Integration, UI/UX Design |
+| **Atien / Frenkli** | Full-Stack Development, Database Architecture, AI Integration, UI/UX Design |
 
 ---
 
