@@ -242,9 +242,11 @@ def forgotpassword():
                 except Exception:
                     current_app.logger.exception("Failed to send password reset email")
 
+            # In debug mode, log the reset link for testing (don't auto-redirect)
             if current_app.debug or os.getenv("SHOW_RESET_LINK") == "1":
-                return redirect(url_for("auth.reset_password", token=reset_token))
+                current_app.logger.info(f"Password reset link (debug): {reset_link}")
 
+            # Only auto-redirect if explicitly enabled for development testing
             if os.getenv("DEV_REDIRECT_RESET") == "1":
                 return redirect(url_for("auth.reset_password", token=reset_token))
 
