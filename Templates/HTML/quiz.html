@@ -2,70 +2,157 @@
 
 {% block title %}Quiz • Focus Flow{% endblock %}
 
-{% block nav_links %}
-    <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
-    <a class="nav-link active" href="{{ url_for('quiz') }}">Quiz</a>
-    <a class="nav-link" href="{{ url_for('logout') }}">Log Out</a>
-{% endblock %}
-
 {% block content %}
 <div class="py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h5 mb-0">Generated Quiz</h1>
-        <div>
-            <span class="badge text-bg-secondary me-2">5 mins</span>
-            <span class="badge text-bg-dark progress-text">0/{{ questions|length }} answered</span>
-        </div>
-    </div>
-
-    <!-- Progress Bar -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body py-3">
-            <div class="progress quiz-progress">
-                <div class="progress-bar bg-dark quiz-progress-bar" style="width: 0%"></div>
-            </div>
-        </div>
-    </div>
-
-    <form id="quizForm" method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="quiz-container">
-        <!-- Dynamically generated questions -->
-        {% for question in questions %}
-        <div class="card q-card shadow-sm mb-3 question-card {% if loop.first %}active{% endif %}" id="question-{{ loop.index }}" data-question-id="{{ loop.index }}">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="small text-secondary">Question {{ loop.index }} of {{ questions|length }}</div>
-                    <div class="small text-secondary">{{ question.category }}</div>
-                </div>
-                <h2 class="h6">{{ question.question_text }}</h2>
-                <div class="mt-3">
-                    {% for answer in question.answers %}
-                    <div class="answer-option" data-answer-id="{{ answer.id }}">
-                        <div class="form-check mb-0">
-                            <input class="form-check-input" type="radio" name="q{{ question.question_number }}" id="{{ answer.id }}" value="{{ answer.id }}">
-                            <label class="form-check-label w-100" for="{{ answer.id }}">{{ answer.text }}</label>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            <!-- Quiz Header Card -->
+            <!-- Displays current question number and progress bar -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1">
+                                <i class="bi bi-journal-check text-primary me-2"></i>Quiz Time!
+                            </h4>
+                            <p class="text-muted mb-0">Answer all questions to complete the quiz</p>
+                        </div>
+                        <!-- Question counter badge (updated by JavaScript) -->
+                        <span class="badge bg-primary rounded-pill px-3 py-2">
+                            <span id="currentQuestion">1</span> / {{ questions|length }}
+                        </span>
+                    </div>
+                    <!-- Progress bar (width updated by JavaScript) -->
+                    <div class="progress mt-3" style="height: 8px;">
+                        <div id="quizProgress" 
+                             class="progress-bar" 
+                             role="progressbar" 
+                             style="width: '{% if questions|length > 0 %}{{ (100 / questions|length)|round }}%{% else %}0%{% endif %}';"
+                             aria-valuenow="{% if questions|length > 0 %}{{ (100 / questions|length)|round }}{% else %}0{% endif %}"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
                         </div>
                     </div>
-                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Quiz Form -->
+            <!-- Contains all questions and answers -->
+            <form id="quizForm" method="POST">
+                <!-- CSRF Token for security -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <!-- Loop through each question -->
+                {% for question in questions %}
+                <div class="question-card {% if loop.first %}active{% endif %}" data-question="{{ loop.index }}">
+                    
+                    <!-- Question Card -->
+                    <div class="card shadow-sm q-card mb-4">
+                        <div class="card-body p-4">
+                            
+                            <!-- Question header with number badge -->
+                            <div class="d-flex align-items-start mb-4">
+                                <span class="badge bg-dark rounded-pill me-3 px-3 py-2">
+                                    Q{{ loop.index }}
+                                </span>
+                                <h5 class="mb-0">{{ question.question_text }}</h5>
+                            </div>
+                            
+                            <!-- Answer options container -->
+                            <div class="answers-container">
+                                {% for answer in question.answers %}
+                                <div class="answer-option" data-answer-id="{{ answer.id }}">
+                                    <div class="form-check">
+                                        <!-- Radio button for answer selection -->
+                                        <!-- name="q1", "q2", etc. matches what the server expects -->
+                                        <input class="form-check-input" 
+                                               type="radio" 
+                                               name="q{{ loop.parent.loop.index }}" 
+                                               id="{{ answer.id }}" 
+                                               value="{{ answer.id }}" 
+                                               required>
+                                        <label class="form-check-label w-100" for="{{ answer.id }}">
+                                            {{ answer.text }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation buttons -->
+                    <div class="d-flex justify-content-between">
+                        {% if not loop.first %}
+                        <!-- Previous button (not shown on first question) -->
+                        <button type="button" class="btn btn-outline-secondary prev-btn">
+                            <i class="bi bi-arrow-left me-1"></i> Previous
+                        </button>
+                        {% else %}
+                        <!-- Cancel button (only on first question) -->
+                        <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x me-1"></i> Cancel
+                        </a>
+                        {% endif %}
+                        
+                        {% if loop.last %}
+                        <!-- Submit button (only on last question) -->
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle me-1"></i> Submit Quiz
+                        </button>
+                        {% else %}
+                        <!-- Next button (not shown on last question) -->
+                        <button type="button" class="btn btn-primary next-btn">
+                            Next <i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </form>
+
+            <!-- Results Modal -->
+            <!-- Shown after quiz submission with score and pass/fail status -->
+            <div id="resultsModal" class="modal fade" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-body text-center p-5">
+                            <!-- Result icon (set by JavaScript) -->
+                            <div id="resultIcon" class="display-1 mb-3"></div>
+                            
+                            <!-- Result title (set by JavaScript) -->
+                            <h3 id="resultTitle" class="fw-bold mb-2"></h3>
+                            
+                            <!-- Result message (set by JavaScript) -->
+                            <p id="resultMessage" class="text-muted mb-4"></p>
+                            
+                            <!-- Score display -->
+                            <div class="d-flex justify-content-center gap-4 mb-4">
+                                <div class="text-center">
+                                    <div id="scoreDisplay" class="h2 mb-0 fw-bold text-primary"></div>
+                                    <small class="text-muted">Score</small>
+                                </div>
+                                <div class="text-center">
+                                    <div id="percentageDisplay" class="h2 mb-0 fw-bold"></div>
+                                    <small class="text-muted">Percentage</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Return to dashboard button -->
+                            <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-primary btn-lg">
+                                <i class="bi bi-house me-1"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        {% endfor %}
     </div>
-
-    <div class="d-flex justify-content-between gap-2">
-        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Back to Dashboard</a>
-        <div>
-            <button class="btn btn-outline-secondary prev-btn" disabled>Previous</button>
-            <button class="btn btn-outline-secondary next-btn" type="button">Next</button>
-            <button class="btn btn-dark" id="submitQuiz" type="submit" disabled>Submit Quiz</button>
-        </div>
-    </div>
-    </form>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<!-- Quiz JavaScript - handles navigation, submission, and results -->
 <script src="{{ url_for('static', filename='JS/quiz.js') }}"></script>
 {% endblock %}

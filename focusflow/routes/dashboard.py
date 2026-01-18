@@ -151,23 +151,50 @@ def add_task():
 
 # ============== API ROUTES ==============
 
+def serialize_value(value):
+    """Convert MongoDB types to JSON-serializable types."""
+    if isinstance(value, ObjectId):
+        return str(value)
+    elif hasattr(value, 'isoformat'):  # datetime objects
+        return value.isoformat()
+    elif isinstance(value, dict):
+        return {k: serialize_value(v) for k, v in value.items()}
+    elif isinstance(value, list):
+        return [serialize_value(item) for item in value]
+    else:
+        return value
+
+
+def serialize_task(task):
+    """Convert a task document to a JSON-serializable dict."""
+    return {k: serialize_value(v) for k, v in task.items()}
+
+
 @dashboard_bp.route("/api/tasks", methods=["GET"])
 @login_required
 def get_tasks():
     """Get all tasks for the current user."""
-    db = get_db()
-    tasks_collection = db["tasks"]
+    try:
+        db = get_db()
+        tasks_collection = db["tasks"]
 
-    tasks = list(tasks_collection.find(
-        {"user_id": ObjectId(current_user.id)}
-    ).sort("created_at", -1))
+        # Find tasks for current user
+        tasks = list(tasks_collection.find(
+            {"user_id": ObjectId(current_user.id)}
+        ))
 
-    for task in tasks:
-        task["_id"] = str(task["_id"])
-        task["user_id"] = str(task["user_id"])
-        task["created_at"] = task["created_at"].isoformat()
+        # Convert all tasks to JSON-serializable dicts
+        result = [serialize_task(task) for task in tasks]
 
-    return jsonify({"success": True, "tasks": tasks}), 200
+        # Sort by created_at descending
+        result.sort(key=lambda x: x.get("created_at") or "", reverse=True)
+
+        return jsonify({"success": True, "tasks": result}), 200
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e), "tasks": []}), 200
 
 
 @dashboard_bp.route("/api/tasks", methods=["POST"])
@@ -293,33 +320,44 @@ def toggle_task(task_id):
 @login_required
 def get_notifications():
     """Return active (non-dismissed) notifications for the current user."""
-    db = get_db()
-    notifications = db["notifications"]
-
     try:
+        db = get_db()
+        notifications = db["notifications"]
+
         user_oid = ObjectId(current_user.id)
-    except Exception:
-        return jsonify({"success": False, "error": "Invalid current user id"}), 400
 
-    docs = list(
-        notifications
-        .find({
-            "userId": user_oid,
-            "status": {"$ne": "dismissed"},
-        })
-        .sort("sentAt", -1)
-    )
+        docs = list(
+            notifications
+            .find({
+                "userId": user_oid,
+                "status": {"$ne": "dismissed"},
+            })
+            .sort("sentAt", -1)
+        )
 
-    result = []
-    for n in docs:
-        result.append({
-            "_id": str(n["_id"]),
-            "type": n.get("type"),
-            "status": n.get("status"),
-            "payload": n.get("payload") or {},
-        })
+        result = []
+        for n in docs:
+            # Safely convert payload, handling any ObjectIds
+            payload = n.get("payload") or {}
+            safe_payload = {}
+            for key, value in payload.items():
+                if isinstance(value, ObjectId):
+                    safe_payload[key] = str(value)
+                else:
+                    safe_payload[key] = value
+            
+            result.append({
+                "_id": str(n["_id"]),
+                "type": n.get("type"),
+                "status": n.get("status"),
+                "payload": safe_payload,
+            })
 
-    return jsonify({"success": True, "notifications": result}), 200
+        return jsonify({"success": True, "notifications": result}), 200
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e), "notifications": []}), 200
 
 
 @dashboard_bp.route("/api/notifications/dismiss/<notification_id>", methods=["PATCH"])
