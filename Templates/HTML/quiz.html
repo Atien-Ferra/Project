@@ -6,7 +6,7 @@
 <div class="py-4">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            
+
             <!-- Quiz Header Card -->
             <!-- Displays current question number and progress bar -->
             <div class="card shadow-sm mb-4">
@@ -25,13 +25,10 @@
                     </div>
                     <!-- Progress bar (width updated by JavaScript) -->
                     <div class="progress mt-3" style="height: 8px;">
-                        <div id="quizProgress" 
-                             class="progress-bar" 
-                             role="progressbar" 
-                             style="width: '{% if questions|length > 0 %}{{ (100 / questions|length)|round }}%{% else %}0%{% endif %}';"
-                             aria-valuenow="{% if questions|length > 0 %}{{ (100 / questions|length)|round }}{% else %}0{% endif %}"
-                             aria-valuemin="0"
-                             aria-valuemax="100">
+                        <div id="quizProgress" class="progress-bar" role="progressbar"
+                            style="width: '{% if questions|length > 0 %}{{ (100 / questions|length)|round }}%{% else %}0%{% endif %}';"
+                            aria-valuenow="{% if questions|length > 0 %}{{ (100 / questions|length)|round }}{% else %}0{% endif %}"
+                            aria-valuemin="0" aria-valuemax="100">
                         </div>
                     </div>
                 </div>
@@ -42,15 +39,15 @@
             <form id="quizForm" method="POST">
                 <!-- CSRF Token for security -->
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                
+
                 <!-- Loop through each question -->
                 {% for question in questions %}
                 <div class="question-card {% if loop.first %}active{% endif %}" data-question="{{ loop.index }}">
-                    
+
                     <!-- Question Card -->
                     <div class="card shadow-sm q-card mb-4">
                         <div class="card-body p-4">
-                            
+
                             <!-- Question header with number badge -->
                             <div class="d-flex align-items-start mb-4">
                                 <span class="badge bg-dark rounded-pill me-3 px-3 py-2">
@@ -58,20 +55,17 @@
                                 </span>
                                 <h5 class="mb-0">{{ question.question_text }}</h5>
                             </div>
-                            
+
                             <!-- Answer options container -->
                             <div class="answers-container">
+                                {% set question_num = loop.index %}
                                 {% for answer in question.answers %}
                                 <div class="answer-option" data-answer-id="{{ answer.id }}">
                                     <div class="form-check">
                                         <!-- Radio button for answer selection -->
                                         <!-- name="q1", "q2", etc. matches what the server expects -->
-                                        <input class="form-check-input" 
-                                               type="radio" 
-                                               name="q{{ loop.parent.loop.index }}" 
-                                               id="{{ answer.id }}" 
-                                               value="{{ answer.id }}" 
-                                               required>
+                                        <input class="form-check-input" type="radio" name="q{{ question_num }}"
+                                            id="{{ answer.id }}" value="{{ answer.id }}" required>
                                         <label class="form-check-label w-100" for="{{ answer.id }}">
                                             {{ answer.text }}
                                         </label>
@@ -81,7 +75,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Navigation buttons -->
                     <div class="d-flex justify-content-between">
                         {% if not loop.first %}
@@ -95,7 +89,7 @@
                             <i class="bi bi-x me-1"></i> Cancel
                         </a>
                         {% endif %}
-                        
+
                         {% if loop.last %}
                         <!-- Submit button (only on last question) -->
                         <button type="submit" class="btn btn-primary btn-lg">
@@ -120,13 +114,13 @@
                         <div class="modal-body text-center p-5">
                             <!-- Result icon (set by JavaScript) -->
                             <div id="resultIcon" class="display-1 mb-3"></div>
-                            
+
                             <!-- Result title (set by JavaScript) -->
                             <h3 id="resultTitle" class="fw-bold mb-2"></h3>
-                            
+
                             <!-- Result message (set by JavaScript) -->
                             <p id="resultMessage" class="text-muted mb-4"></p>
-                            
+
                             <!-- Score display -->
                             <div class="d-flex justify-content-center gap-4 mb-4">
                                 <div class="text-center">
@@ -138,7 +132,7 @@
                                     <small class="text-muted">Percentage</small>
                                 </div>
                             </div>
-                            
+
                             <!-- Return to dashboard button -->
                             <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-primary btn-lg">
                                 <i class="bi bi-house me-1"></i> Back to Dashboard
