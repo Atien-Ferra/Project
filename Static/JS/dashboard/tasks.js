@@ -32,6 +32,9 @@ function fetchTasks() {
                 if (window.DashboardProgress) {
                     window.DashboardProgress.updateProgress();
                 }
+
+                // Update task selectors (Timer/Quiz)
+                updateTaskSelectors(data.tasks);
             }
         })
         .catch(error => {
@@ -240,11 +243,42 @@ function toggleTask(taskId) {
         });
 }
 
+/**
+ * Update task selection dropdowns (Focus Session & Quiz)
+ * 
+ * @param {Array} tasks - List of all tasks
+ */
+function updateTaskSelectors(tasks) {
+    const $timerSelect = $('#timerTaskId');
+    const $quizSelect = $('select[name="task_id"]');
+
+    if (!$timerSelect.length && !$quizSelect.length) return;
+
+    // Save current selection
+    const currentTimerTaskId = $timerSelect.val();
+    const currentQuizTaskId = $quizSelect.val();
+
+    // Clear and add "None" option
+    const timerDefault = '<option value="" class="bg-dark">General Focus (No task)</option>';
+    const quizDefault = '<option value="">No task linked</option>';
+
+    let optionsHtml = '';
+    tasks.forEach(task => {
+        if (!task.done) {
+            optionsHtml += `<option value="${task._id}" class="bg-dark">${task.title}</option>`;
+        }
+    });
+
+    $timerSelect.html(timerDefault + optionsHtml).val(currentTimerTaskId);
+    $quizSelect.html(quizDefault + optionsHtml).val(currentQuizTaskId);
+}
+
 // Export for use by other modules
 window.DashboardTasks = {
     fetchTasks,
     addTaskToDOM,
     createTask,
     deleteTask,
-    toggleTask
+    toggleTask,
+    updateTaskSelectors
 };

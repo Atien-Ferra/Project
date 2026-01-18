@@ -148,6 +148,7 @@ $(document).ready(function () {
      */
     function logSession() {
         const csrfToken = $('meta[name="csrf-token"]').attr('content');
+        const taskId = $('#timerTaskId').val();
 
         fetch('/api/focus/log', {
             method: 'POST',
@@ -157,14 +158,22 @@ $(document).ready(function () {
             },
             body: JSON.stringify({
                 mode: currentMode,
-                duration: MODES[currentMode]
+                duration: MODES[currentMode],
+                taskId: taskId
             })
         })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     console.log('Session logged successfully');
-                    // Could refresh points display here
+                    // Refresh tasks list and stats if a task was completed
+                    if (taskId && window.DashboardTasks) {
+                        window.DashboardTasks.fetchTasks();
+                    }
+                    // Refresh streak display if it changed
+                    if (data.streak !== undefined) {
+                        $('.streak-days').text(data.streak + ' days');
+                    }
                 }
             })
             .catch(err => console.error('Error logging session:', err));

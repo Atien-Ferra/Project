@@ -91,6 +91,8 @@ def dashboard():
             flash("Could not generate questions. Upload a document with more content.", "error")
             return redirect(url_for("dashboard.dashboard"))
 
+        task_id = request.form.get("task_id")
+
         users.update_one(
             {"_id": ObjectId(current_user.id)},
             {"$set": {
@@ -99,6 +101,7 @@ def dashboard():
                     "file_path": temp_path,
                     "file_type": file_type,
                     "uploaded_at": datetime.now(),
+                    "task_id": ObjectId(task_id) if task_id else None
                 },
                 "current_questions": questions
             }}

@@ -151,20 +151,10 @@ def toggle_task(task_id):
             },
         )
 
-        # Only record streak event when going from not done -> done
-        # FIX: This is the ONLY place streak is incremented for tasks
-        if not old_done_status and new_done_status:
-            record_streak_event("task", {"taskId": str(task_oid)})
-            # Also increment tasks_done counter
-            users_collection.update_one(
-                {"_id": user_oid},
-                {"$inc": {"tasks_done": 1}}
-            )
-
-        # Recalculate streak from streakEvents
+        # Recalculate streak from streakEvents (still useful to return updated value)
         streak = calculate_current_streak(current_user.id)
 
-        # Persist on user document
+        # Update the cached streak on the user document
         users_collection.update_one(
             {"_id": user_oid},
             {"$set": {"streak": streak}}

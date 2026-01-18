@@ -8,6 +8,7 @@ from flask_login import login_required, current_user
 from bson.objectid import ObjectId
 from db import get_db
 from ...services.rewards import check_and_award_rewards
+from ...services.streaks import record_streak_event, calculate_current_streak
 from . import quiz_bp
 
 
@@ -75,9 +76,38 @@ def quiz():
             "$unset": {"current_questions": "", "current_file": ""}
         }
         
-        # Only increment tasks_done if passed (not streak - that's handled by streakEvents)
         if passed:
-            update["$inc"]["tasks_done"] = 1
+            # Record streak event
+            record_streak_event("quiz", {"score": score, "total": total})
+            
+            # Calculate updated streak
+            streak = calculate_current_streak(current_user.id)
+            update["$set"] = {"streak": streak}
+            
+            # Handle task credit if a task_id was linked during upload
+            task_id = user_doc.get("current_file", {}).get("task_id")
+            can_increment_tasks_done = True
+            
+            if task_id:
+                try:
+                    tasks_collection = db["tasks"]
+                    task_oid = ObjectId(task_id) if isinstance(task_id, str) else task_id
+                    task = tasks_collection.find_one({"_id": task_oid})
+                    
+                    if task:
+                        # Mark task as done
+                        tasks_collection.update_one({"_id": task_oid}, {"$set": {"done": True}})
+                        
+                        # Only increment if not already credited
+                        if task.get("stats_credited"):
+                            can_increment_tasks_done = False
+                        else:
+                            tasks_collection.update_one({"_id": task_oid}, {"$set": {"stats_credited": True}})
+                except:
+                    pass
+            
+            if can_increment_tasks_done:
+                update["$inc"]["tasks_done"] = 1
 
         users.update_one({"_id": ObjectId(current_user.id)}, update)
         

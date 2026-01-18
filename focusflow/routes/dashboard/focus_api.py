@@ -14,11 +14,12 @@ def log_focus_session():
     data = request.get_json()
     mode = data.get("mode")
     duration = data.get("duration")
+    task_id = data.get("taskId")
     
     if not mode or not duration:
         return jsonify({"success": False, "error": "Missing session data"}), 400
         
-    session_id = record_focus_session(current_user.id, mode, duration)
+    session_id = record_focus_session(current_user.id, mode, duration, task_id=task_id)
     
     return jsonify({
         "success": True,

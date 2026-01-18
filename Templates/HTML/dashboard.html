@@ -137,6 +137,17 @@
                                 <i class="bi bi-info-circle me-1"></i> Supported: PDF, DOCX, TXT (max 16MB)
                             </div>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Link to Task (Optional)</label>
+                            <select name="task_id" class="form-select bg-light border-0">
+                                <option value="">No task linked</option>
+                                {% for task in tasks %}
+                                {% if not task.done %}
+                                <option value="{{ task._id }}">{{ task.title }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="bi bi-magic me-2"></i>Generate Quiz
@@ -235,6 +246,20 @@
                             Break</button>
                         <button type="button" class="btn rounded-pill focus-mode-btn" data-mode="long_break">Long
                             Break</button>
+                    </div>
+
+                    <!-- Task Selector for Timer -->
+                    <div class="mb-4 text-start">
+                        <label class="small text-white text-opacity-50 mb-1 fw-semibold">WORKING ON:</label>
+                        <select id="timerTaskId"
+                            class="form-select form-select-sm bg-white bg-opacity-10 text-white border-0 rounded-3 shadow-none">
+                            <option value="" class="bg-dark">General Focus (No task)</option>
+                            {% for task in tasks %}
+                            {% if not task.done %}
+                            <option value="{{ task._id }}" class="bg-dark">{{ task.title }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
                     </div>
 
                     <!-- Timer Display -->
