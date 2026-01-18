@@ -31,10 +31,32 @@ def quiz():
 
     if request.method == "POST":
         score = 0
+        details = []  # Store detailed results for each question
+        
         for idx, q in enumerate(current_questions):
-            user_answer = request.form.get(f"q{idx+1}")
-            if user_answer == q.get("correct_answer"):
+            user_answer_id = request.form.get(f"q{idx+1}")
+            correct_answer_id = q.get("correct_answer")
+            is_correct = user_answer_id == correct_answer_id
+            
+            if is_correct:
                 score += 1
+            
+            # Find the text for user's answer and correct answer
+            user_answer_text = "No answer selected"
+            correct_answer_text = ""
+            
+            for ans in q.get("answers", []):
+                if ans.get("id") == user_answer_id:
+                    user_answer_text = ans.get("text", "")
+                if ans.get("id") == correct_answer_id:
+                    correct_answer_text = ans.get("text", "")
+            
+            details.append({
+                "question": q.get("question_text", f"Question {idx + 1}"),
+                "user_answer": user_answer_text,
+                "correct_answer": correct_answer_text,
+                "is_correct": is_correct
+            })
 
         total = len(current_questions)
         percentage = int((score / total) * 100) if total else 0
@@ -68,7 +90,8 @@ def quiz():
             "score": score,
             "total": total,
             "percentage": percentage,
-            "passed": passed
+            "passed": passed,
+            "details": details  # Include answer details for review
         })
 
     return render_template("quiz.html", questions=current_questions)

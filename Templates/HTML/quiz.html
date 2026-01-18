@@ -20,13 +20,13 @@
                         </div>
                         <!-- Question counter badge (updated by JavaScript) -->
                         <span class="badge bg-primary rounded-pill px-3 py-2">
-                            <span id="currentQuestion">1</span> / {{ questions|length }}
+                            <span id="currentQuestion">0</span> / <span id="totalQuestions">{{ questions|length
+                                }}</span>
                         </span>
                     </div>
                     <!-- Progress bar (width updated by JavaScript) -->
                     <div class="progress mt-3" style="height: 8px;">
-                        <div id="quizProgress" class="progress-bar" role="progressbar"
-                            style="width: '{% if questions|length > 0 %}{{ (100 / questions|length)|round }}%{% else %}0%{% endif %}';"
+                        <div id="quizProgress" class="progress-bar" role="progressbar" style="width: 0%;"
                             aria-valuenow="{% if questions|length > 0 %}{{ (100 / questions|length)|round }}{% else %}0{% endif %}"
                             aria-valuemin="0" aria-valuemax="100">
                         </div>
@@ -133,10 +133,23 @@
                                 </div>
                             </div>
 
-                            <!-- Return to dashboard button -->
-                            <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-primary btn-lg">
-                                <i class="bi bi-house me-1"></i> Back to Dashboard
-                            </a>
+                            <!-- Action buttons -->
+                            <div class="d-flex justify-content-center gap-3 mb-3">
+                                <button type="button" class="btn btn-outline-primary btn-lg" id="viewAnswersBtn">
+                                    <i class="bi bi-list-check me-1"></i> View Answers
+                                </button>
+                                <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-house me-1"></i> Back to Dashboard
+                                </a>
+                            </div>
+
+                            <!-- Answers Review Section (hidden by default) -->
+                            <div id="answersReview" class="text-start mt-4"
+                                style="display: none; max-height: 300px; overflow-y: auto;">
+                                <hr>
+                                <h5 class="fw-bold mb-3"><i class="bi bi-clipboard-check me-2"></i>Answer Review</h5>
+                                <div id="answersContainer"></div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -3,6 +3,7 @@ Dashboard and task-related routes.
 Split from quiz.py for better organization.
 """
 import os
+import random
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required, current_user
@@ -78,7 +79,13 @@ def dashboard():
             flash("Could not read the file (empty/unreadable).", "error")
             return redirect(url_for("dashboard.dashboard"))
 
-        questions = generate_questions_from_text_lmstudio(extracted, num_questions=5)
+        # Calculate dynamic number of questions based on text length
+        # Base of 5 questions, +1 for every 1000 chars, max 15
+        # Also add a bit of randomness as requested
+        text_len = len(extracted)
+        target_count = min(max(5, (text_len // 1000) + random.randint(0, 2)), 15)
+        
+        questions = generate_questions_from_text_lmstudio(extracted, num_questions=target_count)
         if not questions:
             try:
                 os.remove(temp_path)
