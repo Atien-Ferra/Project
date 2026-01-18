@@ -1,11 +1,18 @@
+"""
+File handling utilities.
+"""
 from typing import Optional
 
 ALLOWED_EXTENSIONS = {"pdf", "docx", "txt", "png", "jpg", "jpeg"}
 
+
 def allowed_file(filename: str) -> bool:
+    """Check if a file has an allowed extension."""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def extract_text_from_file(file_path: str, file_type: str) -> Optional[str]:
+    """Extract text content from a file based on its type."""
     try:
         if file_type == "pdf":
             import PyPDF2

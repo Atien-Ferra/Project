@@ -1,16 +1,14 @@
 """
-Quiz-related routes.
-Split from the original quiz.py for better organization.
+Quiz views - quiz display and submission.
 """
 import os
 from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from bson.objectid import ObjectId
 from db import get_db
-from ..services.rewards import check_and_award_rewards
-
-quiz_bp = Blueprint("quiz", __name__)
+from ...services.rewards import check_and_award_rewards
+from . import quiz_bp
 
 
 @quiz_bp.route("/quiz", methods=["GET", "POST"])
@@ -140,32 +138,3 @@ def profile():
         quizzes_taken=user_doc.get("quizzes_taken", 0),
         tasks_done=user_doc.get("tasks_done", 0),
     )
-
-
-@quiz_bp.route("/api/increment-streak", methods=["POST"])
-@login_required
-def increment_streak():
-    """Increment the current user's streak and return the updated value."""
-    db = get_db()
-    users = db["users"]
-    
-    user = users.find_one({"_id": ObjectId(current_user.id)})
-    if not user:
-        return jsonify({"success": False, "error": "User not found"}), 404
-    
-    # Increment the streak by 1
-    result = users.update_one(
-        {"_id": ObjectId(current_user.id)},
-        {"$inc": {"streak": 1}}
-    )
-    
-    if result.modified_count > 0:
-        # Get the updated user document to return the new streak value
-        updated_user = users.find_one({"_id": ObjectId(current_user.id)})
-        return jsonify({
-            "success": True,
-            "streak": updated_user.get("streak", 0)
-        }), 200
-    else:
-        return jsonify({"success": False, "error": "Failed to update streak"}), 500
-

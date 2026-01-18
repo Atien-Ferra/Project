@@ -1,5 +1,5 @@
 """
-Authentication routes - login, signup, logout, password management.
+Password management routes - update, forgot, and reset password.
 """
 import os
 import secrets
@@ -9,127 +9,12 @@ import ssl
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
-from flask_login import UserMixin, login_user, logout_user, login_required, current_user
+from flask import render_template, request, redirect, url_for, flash, current_app
+from flask_login import logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.objectid import ObjectId
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
-
-from ..extensions import login_manager
 from db import get_db
-
-auth_bp = Blueprint("auth", __name__)
-limiter = Limiter(get_remote_address)
-
-PEPPER = os.getenv("PASSWORD_PEPPER")
-if not PEPPER:
-    raise RuntimeError("PASSWORD_PEPPER not set")
-
-
-class User(UserMixin):
-    """User class for Flask-Login."""
-    def __init__(self, user_id: str, name: str, email: str):
-        self.id = user_id
-        self.name = name
-        self.email = email
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    """Load user from database."""
-    db = get_db()
-    doc = db["users"].find_one({"_id": ObjectId(user_id)})
-    if not doc:
-        return None
-    return User(str(doc["_id"]), doc.get("name", ""), doc.get("email", ""))
-
-
-@auth_bp.route("/login", methods=["GET", "POST"])
-def login():
-    """Handle user login."""
-    if request.method == "POST":
-        email = (request.form.get("email") or "").strip().lower()
-        password = request.form.get("password") or ""
-        remember = bool(request.form.get("remember"))
-
-        pepper = os.getenv("PASSWORD_PEPPER", "")
-        password_to_check = password + pepper
-
-        db = get_db()
-        user_doc = db["users"].find_one({"email": email})
-
-        if user_doc and check_password_hash(user_doc["password"], password_to_check):
-            user = User(str(user_doc["_id"]), user_doc.get("name", ""), user_doc.get("email", ""))
-            login_user(user, remember=remember)
-            flash("Login successful!", "success")
-            return redirect(url_for("dashboard.dashboard"))
-
-        flash("Invalid email or password", "error")
-
-    return render_template("login.html")
-
-
-@auth_bp.route("/signup", methods=["GET", "POST"])
-def signup():
-    """Handle user registration."""
-    if request.method == "POST":
-        name = request.form.get("name")
-        email = request.form.get("email")
-        password = request.form.get("password")
-        password_with_pepper = password + PEPPER
-        confirm_password = request.form.get("confirm_password")
-        terms = request.form.get("terms")
-
-        if not all([name, email, password, confirm_password]):
-            flash("Please fill all required fields", "error")
-            return render_template("signup.html")
-
-        if password != confirm_password:
-            flash("Passwords do not match", "error")
-            return render_template("signup.html")
-
-        if not terms:
-            flash("Please accept the terms and conditions", "error")
-            return render_template("signup.html")
-
-        db = get_db()
-        users_collection = db["users"]
-
-        if users_collection.find_one({"email": email}):
-            flash("Email already registered", "error")
-            return render_template("signup.html")
-
-        hashed_pw = generate_password_hash(
-            password_with_pepper,
-            method="scrypt",
-            salt_length=16
-        )
-        result = users_collection.insert_one({
-            "name": name,
-            "email": email,
-            "password": hashed_pw,
-            "streak": 0,
-            "quizzes_taken": 0,
-            "tasks_done": 0,
-            "files": [],
-            "created_at": datetime.now(timezone.utc)
-        })
-        user = User(str(result.inserted_id), name, email)
-        login_user(user)
-        flash("Account created successfully!", "success")
-        return redirect(url_for("dashboard.dashboard"))
-
-    return render_template("signup.html")
-
-
-@auth_bp.route("/logout")
-@login_required
-def logout():
-    """Handle user logout."""
-    logout_user()
-    flash("You have been logged out", "info")
-    return redirect(url_for("main.index"))
+from . import auth_bp
 
 
 @auth_bp.route("/updatepassword", methods=["GET", "POST"])
@@ -297,61 +182,3 @@ def reset_password(token: str):
         return redirect(url_for("auth.login"))
 
     return render_template("updatepassword.html", token=token)
-
-
-@auth_bp.route("/profile", methods=["GET", "POST"])
-@login_required
-def profile():
-    """User profile page with study preferences."""
-    db = get_db()
-    profiles_collection = db["profiles"]
-    users_collection = db["users"]
-
-    if request.method == "POST":
-        try:
-            session_length_mins = int(request.form.get("studyPrefs.sessionLengthMins", 0))
-            break_long_mins = int(request.form.get("studyPrefs.breakLongMins", 0))
-            preferred_difficulty = request.form.get("studyPrefs.preferredDifficulty")
-            updated_at = datetime.now(timezone.utc)
-
-            profiles_collection.update_one(
-                {"user_id": ObjectId(current_user.id)},
-                {
-                    "$set": {
-                        "studyPrefs.sessionLengthMins": session_length_mins,
-                        "studyPrefs.breakLongMins": break_long_mins,
-                        "studyPrefs.preferredDifficulty": preferred_difficulty,
-                        "updatedAt": updated_at,
-                    }
-                },
-            )
-            return {"message": "Preferences updated successfully."}, 200
-        except Exception as e:
-            return {"error": str(e)}, 400
-
-    user_data = users_collection.find_one({"_id": ObjectId(current_user.id)})
-    profile_data = profiles_collection.find_one({"user_id": ObjectId(current_user.id)})
-
-    if not profile_data:
-        now = datetime.now(timezone.utc)
-        profile_data = {
-            "user_id": ObjectId(current_user.id),
-            "displayName": current_user.name,
-            "studyPrefs": {
-                "sessionLengthMins": 25,
-                "breakLongMins": 15,
-                "preferredDifficulty": "medium",
-            },
-            "createdAt": now,
-            "updatedAt": now,
-        }
-        profiles_collection.insert_one(profile_data)
-
-    profile_data.update({
-        "email": user_data.get("email"),
-        "tasks_done": user_data.get("tasks_done", 0),
-        "quizzes_taken": user_data.get("quizzes_taken", 0),
-        "streak": user_data.get("streak", 0),
-    })
-
-    return render_template("profile.html", profile=profile_data)

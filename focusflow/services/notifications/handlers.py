@@ -1,5 +1,9 @@
+"""
+Notification handling functions.
+"""
 from datetime import datetime
 from bson.objectid import ObjectId
+
 
 def create_notification(db, user_id, notification_type, payload):
     """Create a new notification."""

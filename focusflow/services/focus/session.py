@@ -1,10 +1,8 @@
 """
-Focus Session Service
-=====================
-This module handles focus session logic, including session modes and
-recording completed study sessions to improve user statistics.
+Focus Session Logic
+====================
+This module handles focus session modes and recording completed study sessions.
 """
-
 from datetime import datetime
 from bson.objectid import ObjectId
 from db import get_db
@@ -27,9 +25,11 @@ FOCUS_MODES = {
     }
 }
 
+
 def get_focus_modes():
     """Returns the available focus session modes."""
     return FOCUS_MODES
+
 
 def record_focus_session(user_id, mode, duration_minutes, completed=True):
     """

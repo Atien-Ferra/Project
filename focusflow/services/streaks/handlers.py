@@ -1,7 +1,11 @@
+"""
+Streak recording and calculation functions.
+"""
 from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 from flask_login import current_user
 from db import get_db
+
 
 def record_streak_event(source: str, meta: dict | None = None):
     """
@@ -36,6 +40,7 @@ def record_streak_event(source: str, meta: dict | None = None):
         doc["meta"] = meta
 
     streak_events.insert_one(doc)
+
 
 def calculate_current_streak(user_id: str) -> int:
     db = get_db()
