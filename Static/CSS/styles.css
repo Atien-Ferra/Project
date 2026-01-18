@@ -1,12 +1,10 @@
 /* Focus Flow Custom Styles */
 
 :root {
-    --ff-primary: #6366f1;
-    --ff-primary-dark: #4f46e5;
     --ff-success: #10b981;
     --ff-warning: #f59e0b;
     --ff-danger: #ef4444;
-    --ff-dark: #1e293b;
+    --ff-primary: #1e293b;
     --ff-light: #f8fafc;
     --ff-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
 }
@@ -109,6 +107,10 @@ main {
     transition: width 0.5s ease;
 }
 
+.progress-bar-gradient {
+    background: #000000 !important;
+}
+
 /* Empty State */
 .card-empty {
     border-style: dashed;
@@ -124,7 +126,7 @@ main {
 
 .task-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     border-color: var(--ff-primary);
 }
 
@@ -133,7 +135,7 @@ main {
     border-color: var(--ff-success);
 }
 
-.task-checkbox:checked + label {
+.task-checkbox:checked+label {
     text-decoration: line-through;
     color: #64748b;
 }
@@ -166,13 +168,13 @@ main {
 }
 
 .form-check-input:focus {
-    box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+    box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.25);
     border-color: var(--ff-primary);
 }
 
 .form-control:focus {
     border-color: var(--ff-primary);
-    box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+    box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.25);
 }
 
 /* Buttons */
@@ -189,7 +191,7 @@ main {
 .card {
     border: none;
     border-radius: 1rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .card-header {
@@ -205,23 +207,10 @@ main {
 }
 
 /* Modal */
-#taskModal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1050;
-    background: rgba(0,0,0,0.5);
-}
-
 #taskModal .modal-content {
     border: none;
     border-radius: 1rem;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 #taskModal .modal-header {
@@ -232,7 +221,7 @@ main {
 .toast-container .toast {
     border-radius: 0.75rem;
     border: none;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 
 /* Notification dismiss button */
@@ -255,11 +244,11 @@ main {
     .hero {
         padding: 3rem 0;
     }
-    
+
     .display-5 {
         font-size: 2rem;
     }
-    
+
     .card-body {
         padding: 1rem;
     }
@@ -267,8 +256,15 @@ main {
 
 /* Animations */
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .alert {
@@ -276,8 +272,15 @@ main {
 }
 
 @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
 }
 
 .streak:hover {
@@ -305,5 +308,7 @@ main {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
