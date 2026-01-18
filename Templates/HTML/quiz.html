@@ -2,6 +2,10 @@
 
 {% block title %}Quiz • Focus Flow{% endblock %}
 
+{% block extra_css %}
+<link href="{{ url_for('static', filename='CSS/quiz.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
 <div class="py-4">
     <div class="row justify-content-center">

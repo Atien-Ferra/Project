@@ -16,11 +16,23 @@ $(document).ready(function () {
     let isRunning = false;
     let initialTime = 0;
 
+    // Timer Settings from DOM
+    const $focusCard = $('.focus-card');
+    const sessionLength = parseInt($focusCard.data('session-length')) || 25;
+    const breakLong = parseInt($focusCard.data('break-long')) || 15;
+
     // Mode Durations (in minutes)
     const MODES = {
-        'pomodoro': 25,
+        'pomodoro': sessionLength,
         'short_break': 5,
-        'long_break': 15
+        'long_break': breakLong
+    };
+
+    // Descriptions
+    const MODE_DESCRIPTIONS = {
+        'pomodoro': `Stay focused for ${sessionLength} minutes`,
+        'short_break': 'Refresh for 5 minutes',
+        'long_break': `Take a deep ${breakLong}-minute rest`
     };
 
     // DOM Elements
@@ -79,12 +91,7 @@ $(document).ready(function () {
         $(`.focus-mode-btn[data-mode="${currentMode}"]`).addClass('active');
 
         // Update mode description
-        const modeNames = {
-            'pomodoro': 'Stay focused for 25 minutes',
-            'short_break': 'Refresh for 5 minutes',
-            'long_break': 'Take a deep 15-minute rest'
-        };
-        $('#modeDescription').text(modeNames[currentMode]);
+        $('#modeDescription').text(MODE_DESCRIPTIONS[currentMode]);
     }
 
     /**
@@ -148,7 +155,7 @@ $(document).ready(function () {
      */
     function logSession() {
         const csrfToken = $('meta[name="csrf-token"]').attr('content');
-        const taskId = $('#timerTaskId').val();
+        const taskId = $('#timerTaskId').val() || null;
 
         fetch('/api/focus/log', {
             method: 'POST',

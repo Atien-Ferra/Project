@@ -110,6 +110,21 @@ def dashboard():
         flash("File uploaded successfully! Quiz generated.", "success")
         return redirect(url_for("quiz.quiz"))
 
+    profile_data = db["profiles"].find_one({"user_id": ObjectId(current_user.id)})
+    if not profile_data:
+        # Default fallback
+        study_prefs = {
+            "sessionLengthMins": 25,
+            "breakLongMins": 15,
+            "preferredDifficulty": "medium"
+        }
+    else:
+        study_prefs = profile_data.get("studyPrefs", {
+            "sessionLengthMins": 25,
+            "breakLongMins": 15,
+            "preferredDifficulty": "medium"
+        })
+
     return render_template(
         "dashboard.html",
         user_name=current_user.name,
@@ -119,7 +134,8 @@ def dashboard():
         tasks=user_tasks,
         notifications=user_notifications,
         rewards=user_rewards,
-        total_points=total_points
+        total_points=total_points,
+        study_prefs=study_prefs
     )
 
 

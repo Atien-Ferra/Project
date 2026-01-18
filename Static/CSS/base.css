@@ -6,7 +6,11 @@
     --ff-danger: #ef4444;
     --ff-primary: #1e293b;
     --ff-light: #f8fafc;
-    --ff-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --ff-gradient: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+}
+
+.hero {
+    background: #000000 !important;
 }
 
 body {
@@ -74,6 +78,7 @@ main {
         opacity: 0;
         transform: translateY(-10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
